@@ -1411,7 +1411,20 @@
     // ── Supabase config ──
     const SUPABASE_URL = 'https://tlslzeacrzbogowhsnnx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsc2x6ZWFjcnpib2dvd2hzbm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODAzNjEsImV4cCI6MjA5Njg1NjM2MX0.F4LGOD84Y06-rgk4u8QNYSDnJ25VrVI5pfvhCHHu3OM';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let supabaseClient = null;
+
+    function getSupabase() {
+      if (!supabaseClient) {
+        try {
+          const { createClient } = supabase;
+          supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch(e) {
+          console.error('Erro ao inicializar Supabase:', e);
+        }
+      }
+      return supabaseClient;
+    }
 
     // Modal
     function openModal() {
@@ -1471,8 +1484,10 @@
       btn.disabled = true;
 
       try {
-        // 1. Cria o usuário no Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
+        const db = getSupabase();
+        if (!db) throw new Error('Erro de conexão com o banco de dados.');
+
+        const { data, error } = await db.auth.signUp({
           email,
           password: senha,
           options: {
@@ -1492,7 +1507,6 @@
           return;
         }
 
-        // 2. Sucesso — mostra tela de confirmação
         document.getElementById('modalForm').classList.add('hide');
         document.getElementById('modalSuccess').classList.add('show');
 
