@@ -1507,6 +1507,9 @@
           return;
         }
 
+        setTimeout(() => {
+          window.location.href = 'app.html';
+        }, 1800);
         document.getElementById('modalForm').classList.add('hide');
         document.getElementById('modalSuccess').classList.add('show');
 

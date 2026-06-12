@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LawNode — Painel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #3dff5c;
+      --green-dim: rgba(61,255,92,0.12);
+      --green-glow: rgba(61,255,92,0.08);
+      --bg: #080808;
+      --bg2: #0f0f0f;
+      --bg3: #141414;
+      --bg4: #1a1a1a;
+      --border: rgba(61,255,92,0.12);
+      --border-dim: rgba(255,255,255,0.06);
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.4);
+      --text-secondary: rgba(255,255,255,0.65);
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --sidebar: 240px;
+      --radius: 12px;
+      --radius-lg: 16px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar);
+      min-height: 100vh;
+      background: var(--bg2);
+      border-right: 1px solid var(--border-dim);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 50;
+    }
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border-dim);
+      text-decoration: none;
+    }
+    .logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+    .logo-text span:first-child { color: #fff; }
+    .logo-text span:last-child { color: var(--green); }
+    .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-secondary); }
+    .nav-item.active { background: var(--green-dim); color: var(--green); }
+    .nav-item svg { flex-shrink: 0; opacity: .7; }
+    .nav-item.active svg { opacity: 1; }
+    .sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--border-dim); }
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .user-card:hover { background: rgba(255,255,255,0.04); }
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: var(--green-dim);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 11px; color: var(--text-muted); }
+
+    /* ── CREDITS BADGE ── */
+    .credits-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 12px 12px;
+      padding: 10px 12px;
+      background: var(--green-glow);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .credits-dots { display: flex; gap: 4px; }
+    .credit-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(61,255,92,0.4);
+    }
+    .credit-dot.used { background: rgba(255,255,255,0.15); box-shadow: none; }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: var(--sidebar);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .topbar {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .topbar-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+    .topbar-sub { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+    .btn-upgrade {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--green);
+      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: background .2s;
+    }
+    .btn-upgrade:hover { background: #5fff78; }
+
+    /* ── PAGES ── */
+    .page { display: none; padding: 32px; animation: fadeIn .2s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── GERADOR ── */
+    .generator-layout { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+    .gen-form {
+      background: var(--bg2);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .gen-form-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+    .form-field { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-select, .form-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color .2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .form-select:focus, .form-input:focus { border-color: var(--green); }
+    .form-select option { background: var(--bg3); }
+    .btn-generate {
+      width: 100%;
+      background: var(--green);
+      color: #000;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 800;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background .2s, transform .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-generate:hover { background: #5fff78; transform: translateY(-1px); }
+    .btn-generate:disabled { background: rgba(61,255,92,0.3); cursor: not-allowed; transform: none; }
+
+    /* Results */
+    .results-area {
+      background: var(--bg2);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      min-height: 400px;
+    }
+    .results-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .results-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 340px;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 12px;
+    }
+    .results-empty-icon { font-size: 48px; opacity: .3; }
+    .results-empty p { font-size: 14px; max-width: 240px; line-height: 1.5; }
+    .script-cards { display: flex; flex-direction: column; gap: 12px; }
+    .script-card {
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    .script-card:hover { border-color: var(--border); background: var(--bg4); }
+    .script-card.selected { border-color: var(--green); background: rgba(61,255,92,0.04); }
+    .script-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .script-tag {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--green);
+      background: var(--green-dim);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .script-actions { display: flex; gap: 6px; }
+    .script-btn {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-dim);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all .15s;
+    }
+    .script-btn:hover { border-color: var(--green); color: var(--green); }
+    .script-btn.save { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
+    .script-btn.save:hover { background: #5fff78; }
+    .script-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; }
+    .loading-cards { display: flex; flex-direction: column; gap: 12px; }
+    .loading-card {
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 16px;
+      height: 100px;
+      position: relative;
+      overflow: hidden;
+    }
+    .loading-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(61,255,92,0.04), transparent);
+      animation: shimmer 1.4s ease infinite;
+    }
+    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+    /* ── KANBAN ── */
+    .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .kanban-col {
+      background: var(--bg2);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      min-height: 500px;
+    }
+    .kanban-col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .kanban-col-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .kanban-count {
+      font-size: 11px;
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      color: var(--text-muted);
+      padding: 1px 7px;
+      border-radius: 20px;
+    }
+    .kanban-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .kanban-cards { display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
+    .kanban-card {
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      cursor: grab;
+      transition: border-color .15s, transform .15s;
+      user-select: none;
+    }
+    .kanban-card:hover { border-color: var(--border); transform: translateY(-1px); }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .kanban-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+    .kanban-pill {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border-dim);
+      color: var(--text-muted);
+    }
+    .kanban-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--text-muted);
+      font-size: 13px;
+      gap: 6px;
+      border: 1px dashed var(--border-dim);
+      border-radius: var(--radius);
+    }
+
+    /* ── DASHBOARD ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .stat-value { font-family: var(--font-display); font-size: 32px; font-weight: 800; }
+    .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .stat-green { color: var(--green); }
+    .history-table {
+      background: var(--bg2);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .history-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-dim);
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .history-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 100px 80px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-dim);
+      font-size: 13px;
+      align-items: center;
+      transition: background .15s;
+    }
+    .history-row:hover { background: rgba(255,255,255,0.02); }
+    .history-row:last-child { border-bottom: none; }
+    .history-row.head { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .history-row.head:hover { background: none; }
+    .status-pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .status-pub { background: rgba(61,255,92,0.1); color: var(--green); }
+    .status-prod { background: rgba(255,200,61,0.1); color: #ffd04a; }
+    .status-idea { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+
+    /* ── PERFIL ── */
+    .profile-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+    .profile-card {
+      background: var(--bg2);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .profile-avatar-big {
+      width: 72px; height: 72px;
+      background: var(--green-dim);
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--green);
+      margin-bottom: 16px;
+    }
+    .profile-name { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .profile-email { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .profile-plan-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-glow);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .profile-divider { height: 1px; background: var(--border-dim); margin: 16px 0; }
+    .profile-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; }
+    .profile-stat-label { color: var(--text-muted); }
+    .profile-stat-value { font-weight: 500; }
+    .profile-section-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .plan-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .plan-card {
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .plan-card.current { border-color: var(--green); background: rgba(61,255,92,0.03); }
+    .plan-card-name { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+    .plan-card-price { font-size: 13px; color: var(--text-muted); }
+    .plan-card-badge {
+      font-size: 11px;
+      background: var(--green);
+      color: #000;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .btn-plan {
+      font-size: 13px;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-dim);
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all .15s;
+    }
+    .btn-plan:hover { border-color: var(--green); color: var(--green); }
+    .btn-plan.active-plan { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; cursor: default; }
+    .financial-list { display: flex; flex-direction: column; gap: 8px; }
+    .financial-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg3);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+    .financial-row-left { display: flex; flex-direction: column; gap: 2px; }
+    .financial-desc { font-weight: 500; }
+    .financial-date { font-size: 11px; color: var(--text-muted); }
+    .financial-amount { font-weight: 700; }
+    .financial-amount.paid { color: var(--green); }
+    .financial-amount.free { color: #ffd04a; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-size: 14px;
+      color: var(--text);
+      z-index: 200;
+      display: none;
+      animation: toastIn .3s ease;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .toast.show { display: flex; align-items: center; gap: 10px; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .generator-layout { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .profile-grid { grid-template-columns: 1fr; }
+      .kanban-board { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="index.html" class="sidebar-logo">
+      <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+        <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" stroke="#3dff5c" stroke-width="1.5" fill="none"/>
+        <path d="M18 8L26 13V23L18 28L10 23V13L18 8Z" stroke="#3dff5c" stroke-width="1" fill="none" opacity=".5"/>
+        <circle cx="18" cy="13" r="3" stroke="#3dff5c" stroke-width="1.2" fill="none"/>
+        <path d="M18 16V25" stroke="#3dff5c" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M13 22L18 25L23 22" stroke="#3dff5c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-text"><span>Law</span><span>Node</span></span>
+    </a>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('gerador')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Gerador
+      </button>
+      <button class="nav-item" onclick="showPage('kanban')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="10" rx="1"/><rect x="14" y="17" width="7" height="4" rx="1"/></svg>
+        Kanban
+      </button>
+      <button class="nav-item" onclick="showPage('dashboard')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('perfil')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Meu Perfil
+      </button>
+    </nav>
+
+    <div class="credits-badge" id="creditsBadge">
+      <div class="credits-dots">
+        <div class="credit-dot" id="dot1"></div>
+        <div class="credit-dot" id="dot2"></div>
+      </div>
+      <span id="creditsText">2 créditos disponíveis</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card" onclick="showPage('perfil')">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Carregando...</div>
+          <div class="user-plan">Plano Gratuito</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="topbar-title" id="topbarTitle">Gerador de Roteiros</div>
+        <div class="topbar-sub" id="topbarSub">Crie conteúdo jurídico em segundos</div>
+      </div>
+      <button class="btn-upgrade" onclick="showPage('perfil')">
+        ⚡ Fazer upgrade
+      </button>
+    </div>
+
+    <!-- PAGE: GERADOR -->
+    <div class="page active" id="page-gerador">
+      <div class="generator-layout">
+
+        <div class="gen-form">
+          <div class="gen-form-title">⚙️ Configurar roteiro</div>
+
+          <div class="form-field">
+            <label class="form-label">Área do direito</label>
+            <select class="form-select" id="areaDireito">
+              <option value="">Selecione...</option>
+              <option>Trabalhista</option>
+              <option>Família e Sucessões</option>
+              <option>Criminal</option>
+              <option>Previdenciário</option>
+              <option>Consumidor</option>
+              <option>Imobiliário</option>
+              <option>Empresarial</option>
+              <option>Civil</option>
+              <option>Tributário</option>
+              <option>Ambiental</option>
+              <option>Digital</option>
+              <option>Constitucional</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Tema do conteúdo</label>
+            <input class="form-input" type="text" id="tema" placeholder="Ex: demissão sem justa causa" />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Formato</label>
+            <select class="form-select" id="formato">
+              <option value="">Selecione...</option>
+              <option>Reels / TikTok</option>
+              <option>Story</option>
+              <option>Carrossel</option>
+              <option>YouTube (curto)</option>
+              <option>YouTube (longo)</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Duração</label>
+            <select class="form-select" id="duracao">
+              <option>15 segundos</option>
+              <option>30 segundos</option>
+              <option selected>60 segundos</option>
+              <option>3 minutos</option>
+              <option>5 minutos</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Tom de voz</label>
+            <select class="form-select" id="tom">
+              <option>Educativo</option>
+              <option>Hook forte / impactante</option>
+              <option>Storytelling</option>
+              <option>Provocativo</option>
+              <option>Formal</option>
+            </select>
+          </div>
+
+          <button class="btn-generate" id="btnGenerate" onclick="gerarRoteiros()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Gerar 4 roteiros
+          </button>
+        </div>
+
+        <div class="results-area">
+          <div class="results-title">
+            <span>Variações geradas</span>
+            <span id="resultsCount" style="font-size:13px;color:var(--text-muted);font-family:var(--font-body);font-weight:400;"></span>
+          </div>
+
+          <div id="resultsEmpty" class="results-empty">
+            <div class="results-empty-icon">🎬</div>
+            <p>Preencha o formulário ao lado e clique em "Gerar roteiros" para começar.</p>
+          </div>
+
+          <div id="loadingCards" class="loading-cards" style="display:none">
+            <div class="loading-card"></div>
+            <div class="loading-card"></div>
+            <div class="loading-card"></div>
+            <div class="loading-card"></div>
+          </div>
+
+          <div id="scriptCards" class="script-cards" style="display:none"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE: KANBAN -->
+    <div class="page" id="page-kanban">
+      <div class="kanban-board">
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">
+              <div class="kanban-dot" style="background:#aaa"></div>
+              Ideias
+            </div>
+            <span class="kanban-count" id="count-ideias">0</span>
+          </div>
+          <div class="kanban-cards" id="col-ideias" ondragover="allowDrop(event)" ondrop="drop(event,'ideias')">
+            <div class="kanban-empty">
+              <span>📝</span>
+              Salve roteiros aqui
+            </div>
+          </div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">
+              <div class="kanban-dot" style="background:#ffd04a"></div>
+              Em produção
+            </div>
+            <span class="kanban-count" id="count-producao">0</span>
+          </div>
+          <div class="kanban-cards" id="col-producao" ondragover="allowDrop(event)" ondrop="drop(event,'producao')">
+            <div class="kanban-empty">
+              <span>🎬</span>
+              Arraste roteiros aqui
+            </div>
+          </div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">
+              <div class="kanban-dot" style="background:#3dff5c"></div>
+              Publicado
+            </div>
+            <span class="kanban-count" id="count-publicado">0</span>
+          </div>
+          <div class="kanban-cards" id="col-publicado" ondragover="allowDrop(event)" ondrop="drop(event,'publicado')">
+            <div class="kanban-empty">
+              <span>✅</span>
+              Conteúdos publicados
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Roteiros criados</div>
+          <div class="stat-value stat-green" id="statRoteiros">0</div>
+          <div class="stat-sub">total acumulado</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Publicados</div>
+          <div class="stat-value" id="statPublicados">0</div>
+          <div class="stat-sub">conteúdos no ar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Créditos usados</div>
+          <div class="stat-value" id="statCreditos">0</div>
+          <div class="stat-sub">de 2 gratuitos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Área favorita</div>
+          <div class="stat-value" style="font-size:18px;margin-top:4px" id="statArea">—</div>
+          <div class="stat-sub">mais gerada</div>
+        </div>
+      </div>
+
+      <div class="history-table">
+        <div class="history-header">Histórico de roteiros</div>
+        <div class="history-row head">
+          <span>Tema</span>
+          <span>Formato</span>
+          <span>Status</span>
+          <span>Data</span>
+        </div>
+        <div id="historyBody">
+          <div style="padding:40px;text-align:center;color:var(--text-muted);font-size:14px;">
+            Nenhum roteiro gerado ainda. Vá até o Gerador para começar!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: PERFIL -->
+    <div class="page" id="page-perfil">
+      <div class="profile-grid">
+
+        <div>
+          <div class="profile-card" style="margin-bottom:16px">
+            <div class="profile-avatar-big" id="profileAvatarBig">?</div>
+            <div class="profile-name" id="profileName">—</div>
+            <div class="profile-email" id="profileEmail">—</div>
+            <div class="profile-plan-badge">⚡ Plano Gratuito — 2 créditos</div>
+            <div class="profile-divider"></div>
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Membro desde</span>
+              <span class="profile-stat-value" id="profileSince">—</span>
+            </div>
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Créditos restantes</span>
+              <span class="profile-stat-value stat-green" id="profileCredits">2</span>
+            </div>
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Roteiros gerados</span>
+              <span class="profile-stat-value" id="profileRoteiros">0</span>
+            </div>
+            <div class="profile-divider"></div>
+            <button onclick="handleLogout()" style="width:100%;padding:10px;background:none;border:1px solid rgba(255,80,80,0.3);border-radius:8px;color:#ff6b6b;font-size:13px;cursor:pointer;font-family:var(--font-body);transition:all .15s;" onmouseover="this.style.background='rgba(255,80,80,0.08)'" onmouseout="this.style.background='none'">
+              Sair da conta
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="profile-card" style="margin-bottom:16px">
+            <div class="profile-section-title">Planos disponíveis</div>
+            <div class="plan-cards">
+              <div class="plan-card current">
+                <div>
+                  <div class="plan-card-name">Gratuito</div>
+                  <div class="plan-card-price">2 roteiros para testar</div>
+                </div>
+                <span class="plan-card-badge">Atual</span>
+              </div>
+              <div class="plan-card">
+                <div>
+                  <div class="plan-card-name">Básico</div>
+                  <div class="plan-card-price">R$ 47/mês — roteiros ilimitados</div>
+                </div>
+                <button class="btn-plan">Assinar</button>
+              </div>
+              <div class="plan-card">
+                <div>
+                  <div class="plan-card-name">Pro</div>
+                  <div class="plan-card-price">R$ 97/mês — roteiros + imagens</div>
+                </div>
+                <button class="btn-plan">Assinar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-section-title">Histórico financeiro</div>
+            <div class="financial-list" id="financialList">
+              <div class="financial-row">
+                <div class="financial-row-left">
+                  <span class="financial-desc">Créditos gratuitos de boas-vindas</span>
+                  <span class="financial-date" id="welcomeDate">—</span>
+                </div>
+                <span class="financial-amount free">Grátis</span>
+              </div>
+              <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">
+                Nenhuma transação ainda. Assine um plano para começar.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://tlslzeacrzbogowhsnnx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsc2x6ZWFjcnpib2dvd2hzbm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyODAzNjEsImV4cCI6MjA5Njg1NjM2MX0.F4LGOD84Y06-rgk4u8QNYSDnJ25VrVI5pfvhCHHu3OM';
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ── STATE ──
+    let state = {
+      user: null,
+      credits: 2,
+      roteiros: [],
+      kanban: { ideias: [], producao: [], publicado: [] },
+      dragItem: null
+    };
+
+    // ── INIT ──
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) {
+        window.location.href = 'index.html';
+        return;
+      }
+      state.user = session.user;
+      loadUserUI();
+    });
+
+    function loadUserUI() {
+      const u = state.user;
+      const meta = u.user_metadata || {};
+      const nome = meta.nome_completo || u.email.split('@')[0];
+      const inicial = nome.charAt(0).toUpperCase();
+      const since = new Date(u.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const sinceDate = new Date(u.created_at).toLocaleDateString('pt-BR');
+
+      document.getElementById('userAvatar').textContent = inicial;
+      document.getElementById('userName').textContent = nome;
+      document.getElementById('profileAvatarBig').textContent = inicial;
+      document.getElementById('profileName').textContent = nome;
+      document.getElementById('profileEmail').textContent = u.email;
+      document.getElementById('profileSince').textContent = since;
+      document.getElementById('welcomeDate').textContent = sinceDate;
+      updateCreditsUI();
+    }
+
+    function updateCreditsUI() {
+      const c = state.credits;
+      document.getElementById('creditsText').textContent = c + ' crédito' + (c !== 1 ? 's' : '') + ' disponível' + (c !== 1 ? 'is' : '');
+      document.getElementById('dot1').className = 'credit-dot' + (c >= 1 ? '' : ' used');
+      document.getElementById('dot2').className = 'credit-dot' + (c >= 2 ? '' : ' used');
+      document.getElementById('profileCredits').textContent = c;
+      document.getElementById('statCreditos').textContent = 2 - c;
+      if (c === 0) {
+        document.getElementById('btnGenerate').disabled = true;
+        document.getElementById('btnGenerate').textContent = '⚠️ Créditos esgotados — Faça upgrade';
+      }
+    }
+
+    // ── NAVIGATION ──
+    const pageTitles = {
+      gerador: ['Gerador de Roteiros', 'Crie conteúdo jurídico em segundos'],
+      kanban: ['Kanban Editorial', 'Organize seus roteiros por etapa'],
+      dashboard: ['Dashboard', 'Acompanhe seus resultados'],
+      perfil: ['Meu Perfil', 'Conta, plano e histórico financeiro']
+    };
+
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      document.querySelector('[onclick="showPage(\'' + id + '\')"]').classList.add('active');
+      document.getElementById('topbarTitle').textContent = pageTitles[id][0];
+      document.getElementById('topbarSub').textContent = pageTitles[id][1];
+      if (id === 'dashboard') updateDashboard();
+    }
+
+    // ── GERADOR (simulado — depois conecta à API Claude) ──
+    const roteirosSimulados = [
+      {
+        tag: 'Hook forte',
+        fn: (area, tema, dur, tom) => `🎬 HOOK (0-3s)\n"${tema.charAt(0).toUpperCase() + tema.slice(1)} — antes de qualquer coisa, você PRECISA saber disso."\n\n📌 DESENVOLVIMENTO (3-${dur === '15 segundos' ? '12' : dur === '30 segundos' ? '25' : '50'}s)\nNo direito ${area}, muita gente comete esse erro e acaba perdendo direitos valiosos. Veja o que a lei diz sobre ${tema}...\n\n✅ CTA FINAL\n"Salva esse vídeo e comenta: você sabia disso? Segue para mais conteúdo de ${area}."`
+      },
+      {
+        tag: 'Storytelling',
+        fn: (area, tema, dur) => `🎬 ABERTURA\n"Meu cliente quase perdeu tudo por não saber sobre ${tema}."\n\n📌 HISTÓRIA\nEle chegou no escritório desesperado. Tinha um prazo de 5 dias e não sabia dos seus direitos. No direito ${area}, isso é mais comum do que parece...\n\n✅ VIRADA E CTA\n"Conseguimos reverter a situação. Quer saber como? Me manda uma mensagem ou acessa o link na bio."`
+      },
+      {
+        tag: 'Educativo',
+        fn: (area, tema) => `🎬 ABERTURA\n"3 coisas que você precisa saber sobre ${tema}:"\n\n📌 PONTO 1\nPrimeiro: a lei é clara quando diz que... (insira o fundamento legal aqui)\n\n📌 PONTO 2\nSegundo: o prazo para agir é importante. No ${area}, você tem...\n\n📌 PONTO 3\nTerceiro: o que muita gente não sabe é que...\n\n✅ CTA\n"Salva e compartilha com quem precisa saber disso!"`
+      },
+      {
+        tag: 'Provocativo',
+        fn: (area, tema) => `🎬 GANCHO\n"Você está deixando dinheiro na mesa por não conhecer seus direitos em ${area}."\n\n📌 PROVOCAÇÃO\nSério. Sobre ${tema}, a maioria das pessoas aceita a primeira resposta que recebe. Mas se você soubesse o que a lei realmente diz...\n\n📌 REVELAÇÃO\nExiste um direito garantido que quase ninguém usa. E os que sabem, ganham.\n\n✅ CTA\n"Comenta 'QUERO SABER' e te conto como usar isso a seu favor."`
+      }
+    ];
+
+    async function gerarRoteiros() {
+      const area = document.getElementById('areaDireito').value;
+      const tema = document.getElementById('tema').value.trim();
+      const formato = document.getElementById('formato').value;
+      const duracao = document.getElementById('duracao').value;
+      const tom = document.getElementById('tom').value;
+
+      if (!area || !tema || !formato) {
+        showToast('⚠️ Preencha área, tema e formato antes de gerar.');
+        return;
+      }
+
+      if (state.credits <= 0) {
+        showToast('❌ Seus créditos acabaram. Faça upgrade para continuar.');
+        return;
+      }
+
+      // UI: loading
+      document.getElementById('resultsEmpty').style.display = 'none';
+      document.getElementById('scriptCards').style.display = 'none';
+      document.getElementById('loadingCards').style.display = 'flex';
+      document.getElementById('btnGenerate').disabled = true;
+
+      // Simula delay da IA
+      await new Promise(r => setTimeout(r, 2000));
+
+      // Gera roteiros
+      const cards = document.getElementById('scriptCards');
+      cards.innerHTML = '';
+
+      roteirosSimulados.forEach((r, i) => {
+        const texto = r.fn(area, tema, duracao, tom);
+        const card = document.createElement('div');
+        card.className = 'script-card';
+        card.innerHTML = `
+          <div class="script-card-header">
+            <span class="script-tag">Variação ${i+1} — ${r.tag}</span>
+            <div class="script-actions">
+              <button class="script-btn" onclick="copiarRoteiro(this, ${i})">Copiar</button>
+              <button class="script-btn save" onclick="salvarNoKanban(${i}, '${area}', '${tema}', '${formato}')">Salvar no Kanban</button>
+            </div>
+          </div>
+          <div class="script-text">${texto}</div>`;
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.script-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+        });
+        cards.appendChild(card);
+      });
+
+      // Consome crédito
+      state.credits = Math.max(0, state.credits - 1);
+      state.roteiros.push({ area, tema, formato, duracao, data: new Date(), status: 'ideias' });
+      updateCreditsUI();
+      updateDashboard();
+
+      document.getElementById('loadingCards').style.display = 'none';
+      document.getElementById('scriptCards').style.display = 'flex';
+      document.getElementById('resultsCount').textContent = `${area} · ${formato} · ${duracao}`;
+      document.getElementById('btnGenerate').disabled = state.credits <= 0;
+
+      showToast('✅ 4 roteiros gerados! Escolha o melhor.');
+    }
+
+    function copiarRoteiro(btn, idx) {
+      const texto = document.querySelectorAll('.script-text')[idx].textContent;
+      navigator.clipboard.writeText(texto).then(() => {
+        btn.textContent = 'Copiado!';
+        setTimeout(() => btn.textContent = 'Copiar', 2000);
+      });
+    }
+
+    // ── KANBAN ──
+    function salvarNoKanban(idx, area, tema, formato) {
+      const id = 'card-' + Date.now() + '-' + idx;
+      const card = { id, titulo: tema, area, formato, col: 'ideias' };
+      state.kanban.ideias.push(card);
+      renderKanban();
+      showToast('📌 Roteiro salvo no Kanban (Ideias)!');
+      showPage('kanban');
+    }
+
+    function renderKanban() {
+      ['ideias', 'producao', 'publicado'].forEach(col => {
+        const el = document.getElementById('col-' + col);
+        el.innerHTML = '';
+        const items = state.kanban[col];
+        document.getElementById('count-' + col).textContent = items.length;
+
+        if (items.length === 0) {
+          const labels = { ideias: ['📝','Salve roteiros aqui'], producao: ['🎬','Arraste roteiros aqui'], publicado: ['✅','Conteúdos publicados'] };
+          el.innerHTML = `<div class="kanban-empty"><span>${labels[col][0]}</span>${labels[col][1]}</div>`;
+          return;
+        }
+
+        items.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'kanban-card';
+          card.draggable = true;
+          card.dataset.id = item.id;
+          card.dataset.col = col;
+          card.innerHTML = `
+            <div class="kanban-card-title">${item.titulo}</div>
+            <div class="kanban-card-meta">
+              <span class="kanban-pill">${item.area}</span>
+              <span class="kanban-pill">${item.formato}</span>
+            </div>`;
+          card.addEventListener('dragstart', e => { state.dragItem = { id: item.id, fromCol: col }; });
+          el.appendChild(card);
+        });
+      });
+      updateDashboard();
+    }
+
+    function allowDrop(e) { e.preventDefault(); }
+
+    function drop(e, toCol) {
+      e.preventDefault();
+      if (!state.dragItem) return;
+      const { id, fromCol } = state.dragItem;
+      if (fromCol === toCol) return;
+      const idx = state.kanban[fromCol].findIndex(c => c.id === id);
+      if (idx === -1) return;
+      const [item] = state.kanban[fromCol].splice(idx, 1);
+      item.col = toCol;
+      state.kanban[toCol].push(item);
+      renderKanban();
+      state.dragItem = null;
+    }
+
+    // ── DASHBOARD ──
+    function updateDashboard() {
+      const total = state.roteiros.length;
+      const pub = state.kanban.publicado.length;
+      document.getElementById('statRoteiros').textContent = total;
+      document.getElementById('statPublicados').textContent = pub;
+      document.getElementById('profileRoteiros').textContent = total;
+
+      if (total > 0) {
+        const freq = {};
+        state.roteiros.forEach(r => freq[r.area] = (freq[r.area] || 0) + 1);
+        const top = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+        document.getElementById('statArea').textContent = top[0];
+      }
+
+      const body = document.getElementById('historyBody');
+      if (state.roteiros.length === 0) {
+        body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);font-size:14px;">Nenhum roteiro gerado ainda. Vá até o Gerador para começar!</div>';
+        return;
+      }
+
+      body.innerHTML = state.roteiros.slice().reverse().map(r => {
+        const kanbanItem = [...state.kanban.ideias, ...state.kanban.producao, ...state.kanban.publicado].find(k => k.titulo === r.tema);
+        const status = kanbanItem ? kanbanItem.col : 'ideias';
+        const statusMap = { ideias: ['Ideia', 'status-idea'], producao: ['Em produção', 'status-prod'], publicado: ['Publicado', 'status-pub'] };
+        const [label, cls] = statusMap[status] || ['Ideia', 'status-idea'];
+        const data = r.data.toLocaleDateString('pt-BR');
+        return `<div class="history-row">
+          <span>${r.tema} <span style="color:var(--text-muted);font-size:12px;">· ${r.area}</span></span>
+          <span>${r.formato}</span>
+          <span><span class="status-pill ${cls}">${label}</span></span>
+          <span style="color:var(--text-muted)">${data}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ── LOGOUT ──
+    async function handleLogout() {
+      await db.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // ── TOAST ──
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
