@@ -1096,9 +1096,11 @@
           <input class="modal-input" type="password" placeholder="Mínimo 8 caracteres" id="inputSenha" />
         </div>
 
-        <button class="modal-submit" onclick="handleCadastro()">
+        <button class="modal-submit" id="btnCadastro" onclick="handleCadastro()">
           Criar conta e ganhar 2 créditos grátis →
         </button>
+
+        <div id="modalError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);border-radius:8px;font-size:13px;color:#ff6b6b;"></div>
 
         <div class="modal-divider"><span>já tem conta?</span></div>
 
@@ -1402,7 +1404,15 @@
     </ul>
   </footer>
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
+    // ── Supabase config ──
+    const SUPABASE_URL = 'https://tlslzeacrzbogowhsnnx.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NL9V3sG0g4J5eUszpsloRA_ANINl3yi';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     // Modal
     function openModal() {
       document.getElementById('modalOverlay').classList.add('open');
@@ -1412,13 +1422,17 @@
     function closeModal() {
       document.getElementById('modalOverlay').classList.remove('open');
       document.body.style.overflow = '';
-      // Reset após fechar
       setTimeout(() => {
         document.getElementById('modalForm').classList.remove('hide');
         document.getElementById('modalSuccess').classList.remove('show');
         document.getElementById('inputNome').value = '';
         document.getElementById('inputEmail').value = '';
         document.getElementById('inputSenha').value = '';
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('modalError').textContent = '';
+        const btn = document.getElementById('btnCadastro');
+        btn.textContent = 'Criar conta e ganhar 2 créditos grátis →';
+        btn.disabled = false;
       }, 300);
     }
 
@@ -1432,24 +1446,62 @@
       if (e.key === 'Escape') closeModal();
     });
 
-    function handleCadastro() {
-      const nome = document.getElementById('inputNome').value.trim();
+    async function handleCadastro() {
+      const nome  = document.getElementById('inputNome').value.trim();
       const email = document.getElementById('inputEmail').value.trim();
       const senha = document.getElementById('inputSenha').value.trim();
+      const erro  = document.getElementById('modalError');
+      const btn   = document.getElementById('btnCadastro');
+
+      erro.style.display = 'none';
 
       if (!nome || !email || !senha) {
-        alert('Por favor, preencha todos os campos.');
+        erro.textContent = 'Por favor, preencha todos os campos.';
+        erro.style.display = 'block';
         return;
       }
 
       if (senha.length < 8) {
-        alert('A senha deve ter pelo menos 8 caracteres.');
+        erro.textContent = 'A senha deve ter pelo menos 8 caracteres.';
+        erro.style.display = 'block';
         return;
       }
 
-      // Simula cadastro — aqui futuramente conecta ao backend
-      document.getElementById('modalForm').classList.add('hide');
-      document.getElementById('modalSuccess').classList.add('show');
+      btn.textContent = 'Criando conta...';
+      btn.disabled = true;
+
+      try {
+        // 1. Cria o usuário no Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password: senha,
+          options: {
+            data: { nome_completo: nome, creditos: 2 }
+          }
+        });
+
+        if (error) {
+          if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+            erro.textContent = 'Este e-mail já está cadastrado. Tente fazer login.';
+          } else {
+            erro.textContent = 'Erro ao criar conta: ' + error.message;
+          }
+          erro.style.display = 'block';
+          btn.textContent = 'Criar conta e ganhar 2 créditos grátis →';
+          btn.disabled = false;
+          return;
+        }
+
+        // 2. Sucesso — mostra tela de confirmação
+        document.getElementById('modalForm').classList.add('hide');
+        document.getElementById('modalSuccess').classList.add('show');
+
+      } catch (e) {
+        erro.textContent = 'Erro inesperado. Tente novamente.';
+        erro.style.display = 'block';
+        btn.textContent = 'Criar conta e ganhar 2 créditos grátis →';
+        btn.disabled = false;
+      }
     }
 
     // Scroll reveal
