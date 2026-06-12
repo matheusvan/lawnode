@@ -1105,7 +1105,7 @@
         <div class="modal-divider"><span>já tem conta?</span></div>
 
         <div class="modal-login-link">
-          <a href="#" onclick="return false;">Entrar na minha conta</a>
+          <a href="#" onclick="openLoginModal(); return false;">Entrar na minha conta</a>
         </div>
       </div>
 
@@ -1129,6 +1129,51 @@
     </div>
   </div>
 
+  <!-- MODAL DE LOGIN -->
+  <div class="modal-overlay" id="loginOverlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeLoginModal()">×</button>
+
+      <div class="modal-logo">
+        <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+          <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" stroke="#3dff5c" stroke-width="1.5" fill="none"/>
+          <path d="M18 8L26 13V23L18 28L10 23V13L18 8Z" stroke="#3dff5c" stroke-width="1" fill="none" opacity=".5"/>
+          <circle cx="18" cy="13" r="3" stroke="#3dff5c" stroke-width="1.2" fill="none"/>
+          <path d="M18 16V25" stroke="#3dff5c" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M13 22L18 25L23 22" stroke="#3dff5c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="modal-logo-text"><span>Law</span><span>Node</span></span>
+      </div>
+
+      <div id="loginForm">
+        <div class="modal-title">Bem-vindo de volta</div>
+        <div class="modal-subtitle">Entre com seu e-mail e senha.</div>
+
+        <div class="modal-field">
+          <label class="modal-label">E-mail</label>
+          <input class="modal-input" type="email" placeholder="seu@email.com" id="loginEmail" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Senha</label>
+          <input class="modal-input" type="password" placeholder="Sua senha" id="loginSenha" />
+        </div>
+
+        <button class="modal-submit" id="btnLogin" onclick="handleLogin()">
+          Entrar na minha conta →
+        </button>
+
+        <div id="loginError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);border-radius:8px;font-size:13px;color:#ff6b6b;"></div>
+
+        <div class="modal-divider"><span>não tem conta?</span></div>
+
+        <div class="modal-login-link">
+          <a href="#" onclick="closeLoginModal(); openModal(); return false;">Criar conta grátis</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav>
     <a href="#" class="nav-logo">
@@ -1147,6 +1192,7 @@
       <li><a href="#como-funciona">Como funciona</a></li>
       <li><a href="#funcionalidades">Funcionalidades</a></li>
       <li><a href="#precos">Preços</a></li>
+      <li><a href="#" onclick="openLoginModal(); return false;" style="color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">Entrar</a></li>
       <li><a href="#" onclick="openModal(); return false;" class="nav-cta">Começar grátis →</a></li>
     </ul>
   </nav>
@@ -1454,9 +1500,73 @@
       if (e.target === this) closeModal();
     });
 
-    // Fechar com ESC
+    function openLoginModal() {
+      closeModal();
+      document.getElementById('loginOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginSenha').value = '';
+      document.getElementById('loginError').style.display = 'none';
+      const btn = document.getElementById('btnLogin');
+      btn.textContent = 'Entrar na minha conta →';
+      btn.disabled = false;
+    }
+
+    document.getElementById('loginOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeLoginModal();
+    });
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const senha = document.getElementById('loginSenha').value.trim();
+      const erro  = document.getElementById('loginError');
+      const btn   = document.getElementById('btnLogin');
+
+      erro.style.display = 'none';
+
+      if (!email || !senha) {
+        erro.textContent = 'Preencha e-mail e senha.';
+        erro.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Entrando...';
+      btn.disabled = true;
+
+      try {
+        const db = getSupabase();
+        if (!db) throw new Error('Erro de conexão.');
+
+        const { data, error } = await db.auth.signInWithPassword({ email, password: senha });
+
+        if (error) {
+          if (error.message.includes('Invalid login')) {
+            erro.textContent = 'E-mail ou senha incorretos. Tente novamente.';
+          } else {
+            erro.textContent = 'Erro ao entrar: ' + error.message;
+          }
+          erro.style.display = 'block';
+          btn.textContent = 'Entrar na minha conta →';
+          btn.disabled = false;
+          return;
+        }
+
+        window.location.href = 'app.html';
+
+      } catch(e) {
+        erro.textContent = 'Erro inesperado. Tente novamente.';
+        erro.style.display = 'block';
+        btn.textContent = 'Entrar na minha conta →';
+        btn.disabled = false;
+      }
+    }
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') { closeModal(); closeLoginModal(); }
     });
 
     async function handleCadastro() {
