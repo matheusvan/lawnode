@@ -897,10 +897,6 @@
 
     // ── INIT ──
     window.addEventListener('DOMContentLoaded', async () => {
-      // Salva a chave Gemini localmente (só na primeira vez)
-      if (!localStorage.getItem('ln_gk')) {
-        localStorage.setItem('ln_gk', 'AQ.Ab8RN6KRmq81ipUG-V4DQp8-bw66tq-D1Af4ChEG59MO8eA2EQ');
-      }
       const { data: { session } } = await db.auth.getSession();
       if (!session) {
         window.location.href = 'index.html';
