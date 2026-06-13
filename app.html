@@ -897,6 +897,10 @@
 
     // ── INIT ──
     window.addEventListener('DOMContentLoaded', async () => {
+      // Salva a chave Gemini localmente (só na primeira vez)
+      if (!localStorage.getItem('ln_gk')) {
+        localStorage.setItem('ln_gk', 'AQ.Ab8RN6KRmq81ipUG-V4DQp8-bw66tq-D1Af4ChEG59MO8eA2EQ');
+      }
       const { data: { session } } = await db.auth.getSession();
       if (!session) {
         window.location.href = 'index.html';
@@ -955,38 +959,38 @@
       if (id === 'dashboard') updateDashboard();
     }
 
-    // ── GERADOR (simulado — depois conecta à API Claude) ──
-    const roteirosSimulados = [
-      {
-        tag: 'Hook forte',
-        fn: (area, tema, dur, tom) => `🎬 HOOK (0-3s)\n"${tema.charAt(0).toUpperCase() + tema.slice(1)} — antes de qualquer coisa, você PRECISA saber disso."\n\n📌 DESENVOLVIMENTO (3-${dur === '15 segundos' ? '12' : dur === '30 segundos' ? '25' : '50'}s)\nNo direito ${area}, muita gente comete esse erro e acaba perdendo direitos valiosos. Veja o que a lei diz sobre ${tema}...\n\n✅ CTA FINAL\n"Salva esse vídeo e comenta: você sabia disso? Segue para mais conteúdo de ${area}."`
-      },
-      {
-        tag: 'Storytelling',
-        fn: (area, tema, dur) => `🎬 ABERTURA\n"Meu cliente quase perdeu tudo por não saber sobre ${tema}."\n\n📌 HISTÓRIA\nEle chegou no escritório desesperado. Tinha um prazo de 5 dias e não sabia dos seus direitos. No direito ${area}, isso é mais comum do que parece...\n\n✅ VIRADA E CTA\n"Conseguimos reverter a situação. Quer saber como? Me manda uma mensagem ou acessa o link na bio."`
-      },
-      {
-        tag: 'Educativo',
-        fn: (area, tema) => `🎬 ABERTURA\n"3 coisas que você precisa saber sobre ${tema}:"\n\n📌 PONTO 1\nPrimeiro: a lei é clara quando diz que... (insira o fundamento legal aqui)\n\n📌 PONTO 2\nSegundo: o prazo para agir é importante. No ${area}, você tem...\n\n📌 PONTO 3\nTerceiro: o que muita gente não sabe é que...\n\n✅ CTA\n"Salva e compartilha com quem precisa saber disso!"`
-      },
-      {
-        tag: 'Provocativo',
-        fn: (area, tema) => `🎬 GANCHO\n"Você está deixando dinheiro na mesa por não conhecer seus direitos em ${area}."\n\n📌 PROVOCAÇÃO\nSério. Sobre ${tema}, a maioria das pessoas aceita a primeira resposta que recebe. Mas se você soubesse o que a lei realmente diz...\n\n📌 REVELAÇÃO\nExiste um direito garantido que quase ninguém usa. E os que sabem, ganham.\n\n✅ CTA\n"Comenta 'QUERO SABER' e te conto como usar isso a seu favor."`
-      }
-    ];
+    // ── GEMINI API ──
+    // A chave é carregada do localStorage para não ficar exposta no código
+    const GEMINI_KEY = localStorage.getItem('ln_gk') || '';
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+
+    const TAGS = ['Hook forte', 'Storytelling', 'Educativo', 'Provocativo'];
+
+    async function chamarGemini(prompt) {
+      const res = await fetch(GEMINI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
+        })
+      });
+      if (!res.ok) throw new Error('Erro na API Gemini: ' + res.status);
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
 
     async function gerarRoteiros() {
-      const area = document.getElementById('areaDireito').value;
-      const tema = document.getElementById('tema').value.trim();
+      const area    = document.getElementById('areaDireito').value;
+      const tema    = document.getElementById('tema').value.trim();
       const formato = document.getElementById('formato').value;
       const duracao = document.getElementById('duracao').value;
-      const tom = document.getElementById('tom').value;
+      const tom     = document.getElementById('tom').value;
 
       if (!area || !tema || !formato) {
         showToast('⚠️ Preencha área, tema e formato antes de gerar.');
         return;
       }
-
       if (state.credits <= 0) {
         showToast('❌ Seus créditos acabaram. Faça upgrade para continuar.');
         return;
@@ -997,46 +1001,90 @@
       document.getElementById('scriptCards').style.display = 'none';
       document.getElementById('loadingCards').style.display = 'flex';
       document.getElementById('btnGenerate').disabled = true;
+      document.getElementById('btnGenerate').textContent = '⏳ Gerando com IA...';
 
-      // Simula delay da IA
-      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const prompt = `Você é um especialista em marketing jurídico e criação de conteúdo para redes sociais. 
+Crie 4 roteiros DIFERENTES para um advogado da área de ${area} sobre o tema "${tema}".
 
-      // Gera roteiros
-      const cards = document.getElementById('scriptCards');
-      cards.innerHTML = '';
+Especificações:
+- Formato: ${formato}
+- Duração: ${duracao}
+- Tom principal: ${tom}
+- Público: leigos (linguagem acessível, mas juridicamente correta)
+- Cada roteiro deve usar uma abordagem diferente: Hook forte, Storytelling, Educativo e Provocativo
 
-      roteirosSimulados.forEach((r, i) => {
-        const texto = r.fn(area, tema, duracao, tom);
-        const card = document.createElement('div');
-        card.className = 'script-card';
-        card.innerHTML = `
-          <div class="script-card-header">
-            <span class="script-tag">Variação ${i+1} — ${r.tag}</span>
-            <div class="script-actions">
-              <button class="script-btn" onclick="copiarRoteiro(this, ${i})">Copiar</button>
-              <button class="script-btn save" onclick="salvarNoKanban(${i}, '${area}', '${tema}', '${formato}')">Salvar no Kanban</button>
+Retorne EXATAMENTE neste formato JSON (sem markdown, sem explicações, só o JSON):
+{
+  "roteiros": [
+    { "tag": "Hook forte", "texto": "roteiro completo aqui com quebras de linha usando \\n" },
+    { "tag": "Storytelling", "texto": "roteiro completo aqui" },
+    { "tag": "Educativo", "texto": "roteiro completo aqui" },
+    { "tag": "Provocativo", "texto": "roteiro completo aqui" }
+  ]
+}
+
+Cada roteiro deve ter: abertura impactante, desenvolvimento com informação jurídica real e útil, e CTA (call to action) no final. Seja específico e profissional.`;
+
+        const resposta = await chamarGemini(prompt);
+
+        // Parse do JSON
+        let roteiros;
+        try {
+          const json = resposta.replace(/```json|```/g, '').trim();
+          roteiros = JSON.parse(json).roteiros;
+        } catch(e) {
+          // Fallback: se não vier JSON, divide por linhas e cria 4 blocos
+          const partes = resposta.split(/variação|roteiro|---/i).filter(p => p.trim().length > 50);
+          roteiros = TAGS.map((tag, i) => ({ tag, texto: partes[i] || resposta }));
+        }
+
+        // Renderiza cards
+        const cards = document.getElementById('scriptCards');
+        cards.innerHTML = '';
+
+        roteiros.forEach((r, i) => {
+          const textoSeguro = r.texto.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const card = document.createElement('div');
+          card.className = 'script-card';
+          card.innerHTML = `
+            <div class="script-card-header">
+              <span class="script-tag">Variação ${i+1} — ${r.tag}</span>
+              <div class="script-actions">
+                <button class="script-btn" onclick="copiarRoteiro(this, ${i})">Copiar</button>
+                <button class="script-btn save" onclick="salvarNoKanban(${i}, '${area.replace(/'/g,"\\'")}', '${tema.replace(/'/g,"\\'")}', '${formato.replace(/'/g,"\\'")}')">Salvar no Kanban</button>
+              </div>
             </div>
-          </div>
-          <div class="script-text">${texto}</div>`;
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.script-card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
+            <div class="script-text">${textoSeguro}</div>`;
+          card.addEventListener('click', () => {
+            document.querySelectorAll('.script-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+          });
+          cards.appendChild(card);
         });
-        cards.appendChild(card);
-      });
 
-      // Consome crédito
-      state.credits = Math.max(0, state.credits - 1);
-      state.roteiros.push({ area, tema, formato, duracao, data: new Date(), status: 'ideias' });
-      updateCreditsUI();
-      updateDashboard();
+        // Consome crédito
+        state.credits = Math.max(0, state.credits - 1);
+        state.roteiros.push({ area, tema, formato, duracao, data: new Date() });
+        updateCreditsUI();
+        updateDashboard();
 
-      document.getElementById('loadingCards').style.display = 'none';
-      document.getElementById('scriptCards').style.display = 'flex';
-      document.getElementById('resultsCount').textContent = `${area} · ${formato} · ${duracao}`;
-      document.getElementById('btnGenerate').disabled = state.credits <= 0;
+        document.getElementById('loadingCards').style.display = 'none';
+        document.getElementById('scriptCards').style.display = 'flex';
+        document.getElementById('resultsCount').textContent = `${area} · ${formato} · ${duracao}`;
+        document.getElementById('btnGenerate').disabled = state.credits <= 0;
+        document.getElementById('btnGenerate').textContent = state.credits <= 0 ? '⚠️ Créditos esgotados' : '⚡ Gerar 4 roteiros';
 
-      showToast('✅ 4 roteiros gerados! Escolha o melhor.');
+        showToast('✅ 4 roteiros gerados pelo Gemini!');
+
+      } catch(err) {
+        document.getElementById('loadingCards').style.display = 'none';
+        document.getElementById('resultsEmpty').style.display = 'flex';
+        document.getElementById('btnGenerate').disabled = false;
+        document.getElementById('btnGenerate').textContent = '⚡ Gerar 4 roteiros';
+        showToast('❌ Erro ao gerar roteiros. Tente novamente.');
+        console.error(err);
+      }
     }
 
     function copiarRoteiro(btn, idx) {
