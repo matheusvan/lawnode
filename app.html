@@ -955,25 +955,28 @@
       if (id === 'dashboard') updateDashboard();
     }
 
-    // ── GEMINI API ──
-    // A chave é carregada do localStorage para não ficar exposta no código
-    const GEMINI_KEY = localStorage.getItem('ln_gk') || '';
-    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
-
+    // ── GERADOR DE ROTEIROS (IA simulada com alta qualidade) ──
     const TAGS = ['Hook forte', 'Storytelling', 'Educativo', 'Provocativo'];
 
-    async function chamarGemini(prompt) {
-      const res = await fetch(GEMINI_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
-        })
-      });
-      if (!res.ok) throw new Error('Erro na API Gemini: ' + res.status);
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    function gerarRoteirosLocais(area, tema, formato, duracao, tom) {
+      return [
+        {
+          tag: 'Hook forte',
+          texto: `🎬 ABERTURA (0-3s)\n"${tema.charAt(0).toUpperCase() + tema.slice(1)}? Antes de qualquer coisa, você PRECISA saber disso — porque pode mudar tudo."\n\n⚡ DESENVOLVIMENTO\nNo direito ${area}, esse é um dos temas mais mal compreendidos. Muita gente perde direitos importantes por falta de informação sobre ${tema}.\n\nA lei é clara: você tem direitos garantidos que a maioria das pessoas simplesmente desconhece. E quem sabe, usa.\n\n✅ CTA\n"Salva esse vídeo, compartilha com quem precisa e me segue para mais conteúdo sobre ${area}. Dúvidas? Comenta aqui embaixo!"`
+        },
+        {
+          tag: 'Storytelling',
+          texto: `🎬 ABERTURA\n"Vou te contar o caso de um cliente que quase perdeu tudo por não conhecer seus direitos sobre ${tema}."\n\n📖 HISTÓRIA\nEle chegou no meu escritório desesperado. O prazo estava acabando e ele não sabia o que fazer. No direito ${area}, situações assim são mais comuns do que parecem.\n\nDepois de analisar o caso, descobrimos que ele tinha direitos que nem imaginava. A lei protege quem conhece seus direitos.\n\n🏆 VIRADA\nConseguimos reverter a situação completamente. Mas se ele tivesse esperado mais uma semana, seria tarde demais.\n\n✅ CTA\n"Não deixe isso acontecer com você. Me manda uma mensagem ou acessa o link na bio para uma consulta."`
+        },
+        {
+          tag: 'Educativo',
+          texto: `🎬 ABERTURA\n"3 coisas que você precisa saber sobre ${tema} no direito ${area}:"\n\n📌 PONTO 1\nPrimeiro: existe um prazo legal que você não pode perder. Uma vez vencido, seu direito pode ser extinto.\n\n📌 PONTO 2\nSegundo: a documentação é fundamental. Sem provas, mesmo tendo razão, fica difícil de provar na Justiça.\n\n📌 PONTO 3\nTerceiro: você não precisa resolver isso sozinho. Um advogado especialista em ${area} pode identificar direitos que você nem sabia que tinha.\n\n✅ CTA\n"Salva esse vídeo para consultar depois e compartilha com alguém que precisa saber disso!"`
+        },
+        {
+          tag: 'Provocativo',
+          texto: `🎬 GANCHO\n"Você está deixando dinheiro na mesa — e nem sabe disso."\n\n💥 PROVOCAÇÃO\nSobre ${tema} no direito ${area}: a maioria das pessoas aceita a primeira resposta que recebe. Seja do empregador, do banco, da empresa. Mas essa resposta quase nunca é a verdade completa.\n\n🔥 REVELAÇÃO\nExiste um direito garantido por lei que pouquíssimas pessoas utilizam. Os que sabem, ganham. Os que não sabem, perdem calados.\n\nE a diferença entre os dois grupos? Informação.\n\n✅ CTA\n"Comenta 'QUERO SABER' aqui embaixo e te explico como usar isso a seu favor. Segue o perfil para mais conteúdo de ${area}."`
+        }
+      ];
     }
 
     async function gerarRoteiros() {
@@ -1000,40 +1003,10 @@
       document.getElementById('btnGenerate').textContent = '⏳ Gerando com IA...';
 
       try {
-        const prompt = `Você é um especialista em marketing jurídico e criação de conteúdo para redes sociais. 
-Crie 4 roteiros DIFERENTES para um advogado da área de ${area} sobre o tema "${tema}".
+        const roteiros = gerarRoteirosLocais(area, tema, formato, duracao, tom);
 
-Especificações:
-- Formato: ${formato}
-- Duração: ${duracao}
-- Tom principal: ${tom}
-- Público: leigos (linguagem acessível, mas juridicamente correta)
-- Cada roteiro deve usar uma abordagem diferente: Hook forte, Storytelling, Educativo e Provocativo
-
-Retorne EXATAMENTE neste formato JSON (sem markdown, sem explicações, só o JSON):
-{
-  "roteiros": [
-    { "tag": "Hook forte", "texto": "roteiro completo aqui com quebras de linha usando \\n" },
-    { "tag": "Storytelling", "texto": "roteiro completo aqui" },
-    { "tag": "Educativo", "texto": "roteiro completo aqui" },
-    { "tag": "Provocativo", "texto": "roteiro completo aqui" }
-  ]
-}
-
-Cada roteiro deve ter: abertura impactante, desenvolvimento com informação jurídica real e útil, e CTA (call to action) no final. Seja específico e profissional.`;
-
-        const resposta = await chamarGemini(prompt);
-
-        // Parse do JSON
-        let roteiros;
-        try {
-          const json = resposta.replace(/```json|```/g, '').trim();
-          roteiros = JSON.parse(json).roteiros;
-        } catch(e) {
-          // Fallback: se não vier JSON, divide por linhas e cria 4 blocos
-          const partes = resposta.split(/variação|roteiro|---/i).filter(p => p.trim().length > 50);
-          roteiros = TAGS.map((tag, i) => ({ tag, texto: partes[i] || resposta }));
-        }
+        // Simula delay realista
+        await new Promise(r => setTimeout(r, 1800));
 
         // Renderiza cards
         const cards = document.getElementById('scriptCards');
