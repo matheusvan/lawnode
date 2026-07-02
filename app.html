@@ -501,16 +501,16 @@
           <div class="profile-section-title">Planos disponíveis</div>
           <div class="plan-cards">
             <div class="plan-card" id="planFree">
-              <div><div class="plan-card-name">Gratuito</div><div class="plan-card-price">2 roteiros para testar</div></div>
+              <div><div class="plan-card-name">Gratuito</div><div class="plan-card-price">2 tokens para testar</div></div>
               <span class="plan-card-badge" id="badgeFree" style="display:none">Atual</span>
             </div>
             <div class="plan-card" id="planBasico">
-              <div><div class="plan-card-name">Básico</div><div class="plan-card-price">R$ 59,90/mês — roteiros ilimitados</div></div>
-              <button class="btn-plan" onclick="abrirCheckout('basico')">Assinar</button>
+              <div><div class="plan-card-name">Básico</div><div class="plan-card-price">R$ 49,90/mês · 40 tokens · só texto</div></div>
+              <button class="btn-plan" onclick="abrirEscolhaPlano()">Assinar</button>
             </div>
             <div class="plan-card" id="planPro">
-              <div><div class="plan-card-name">Pro</div><div class="plan-card-price">R$ 99,90/mês — roteiros + imagens</div></div>
-              <button class="btn-plan" onclick="abrirCheckout('pro')">Assinar</button>
+              <div><div class="plan-card-name">Pro</div><div class="plan-card-price">R$ 99,90/mês · 40 tokens · texto + imagens</div></div>
+              <button class="btn-plan" onclick="abrirEscolhaPlano()">Assinar</button>
             </div>
           </div>
         </div>
@@ -592,9 +592,9 @@
       <div onclick="fecharEscolhaPlano('basico')" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:var(--radius-lg);padding:20px 24px;cursor:pointer;transition:border-color .2s,transform .15s" onmouseover="this.style.borderColor='var(--green)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.transform='none'">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span style="font-family:var(--font-display);font-size:17px;font-weight:700">Básico</span>
-          <span style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--green)">R$ 59,90<span style="font-size:13px;color:var(--text-muted);font-weight:400">/mês</span></span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--green)">R$ 49,90<span style="font-size:13px;color:var(--text-muted);font-weight:400">/mês</span></span>
         </div>
-        <div style="font-size:13px;color:var(--text-muted)">Roteiros ilimitados em texto · Kanban · Dashboard</div>
+        <div style="font-size:13px;color:var(--text-muted)">40 tokens/mês · Roteiros em texto · Kanban · Dashboard</div>
       </div>
 
       <div onclick="fecharEscolhaPlano('pro')" style="background:rgba(61,255,92,0.03);border:1px solid var(--green);border-radius:var(--radius-lg);padding:20px 24px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
@@ -603,7 +603,7 @@
           <span style="font-family:var(--font-display);font-size:17px;font-weight:700">Pro</span>
           <span style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--green)">R$ 99,90<span style="font-size:13px;color:var(--text-muted);font-weight:400">/mês</span></span>
         </div>
-        <div style="font-size:13px;color:var(--text-muted)">Tudo do Básico + geração de imagens · YouTube · Suporte prioritário</div>
+        <div style="font-size:13px;color:var(--text-muted)">40 tokens/mês · Roteiros + geração de imagens · YouTube · Suporte prioritário</div>
       </div>
     </div>
 
@@ -702,12 +702,25 @@ const ADMIN_EMAIL = 'yt.ujoveminvestidor@gmail.com';
 const ADMIN_CREDITS = Infinity;
 
 // ─────────────────────────────────────────
+// PLANOS
+// ─────────────────────────────────────────
+const PLANOS = {
+  gratuito: { nome: 'Gratuito',  tokens: 2,  imagem: false, cor: 'var(--text-muted)' },
+  basico:   { nome: 'Básico',    tokens: 40, imagem: false, cor: 'var(--green)' },
+  pro:      { nome: 'Pro',       tokens: 40, imagem: true,  cor: '#ffd04a' },
+  admin:    { nome: 'Admin',     tokens: Infinity, imagem: true, cor: '#ffd04a' },
+};
+
+// ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
 let state = {
   user: null,
   isAdmin: false,
+  plano: 'gratuito',
   credits: 2,
+  tokensMax: 2,
+  temImagem: false,
   roteiros: [],
   kanban: { ideias: [], producao: [], publicado: [] },
   dragItem: null
@@ -729,7 +742,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (!session) { window.location.href = 'index.html'; return; }
   state.user = session.user;
   state.isAdmin = session.user.email === ADMIN_EMAIL;
-  if (state.isAdmin) state.credits = ADMIN_CREDITS;
+
+  // Detecta plano do usuário
+  const meta = session.user.user_metadata || {};
+  if (state.isAdmin) {
+    state.plano = 'admin';
+  } else if (meta.plano === 'pro' && meta.plano_ativo) {
+    state.plano = 'pro';
+  } else if (meta.plano === 'basico' && meta.plano_ativo) {
+    state.plano = 'basico';
+  } else {
+    state.plano = 'gratuito';
+  }
+
+  const p = PLANOS[state.plano];
+  state.credits = state.isAdmin ? Infinity : (meta.tokens_restantes ?? p.tokens);
+  state.tokensMax = p.tokens;
+  state.temImagem = p.imagem;
+
   loadUserUI();
 });
 
@@ -760,9 +790,20 @@ function loadUserUI() {
     document.getElementById('homeBtnUpgrade').style.display = 'none';
     document.getElementById('homeCreditsFill').style.width = '100%';
   } else {
-    document.getElementById('userPlanLabel').textContent = 'Plano Gratuito';
-    document.getElementById('homePlanName').textContent = 'Plano Gratuito';
-    document.getElementById('homePlanDesc').textContent = '2 roteiros para testar o LawNode';
+    const p = PLANOS[state.plano];
+    const planLabel = state.plano === 'gratuito' ? 'Plano Gratuito' :
+                      state.plano === 'basico' ? 'Plano Básico' : 'Plano Pro';
+    document.getElementById('userPlanLabel').textContent = planLabel;
+    document.getElementById('profilePlanBadge').textContent = `⚡ ${planLabel}`;
+    document.getElementById('homePlanName').textContent = planLabel;
+    document.getElementById('homePlanDesc').textContent =
+      state.plano === 'gratuito' ? '2 tokens para testar o LawNode' :
+      state.plano === 'basico'   ? `50 tokens/mês · Roteiros em texto` :
+                                   `30 tokens/mês · Roteiros + imagens`;
+    document.getElementById('statCreditosSub').textContent = `de ${p.tokens === Infinity ? '∞' : p.tokens} tokens`;
+    if (state.plano !== 'gratuito') {
+      document.getElementById('homeBtnUpgrade').style.display = 'none';
+    }
   }
 
   updateCreditsUI();
@@ -771,30 +812,32 @@ function loadUserUI() {
 
 function updateCreditsUI() {
   const c = state.credits;
+  const max = state.tokensMax;
   const isUnlimited = c === Infinity;
   const dotsEl = document.getElementById('creditsDotsEl');
   dotsEl.innerHTML = '';
 
   if (isUnlimited) {
-    document.getElementById('creditsText').textContent = '∞ créditos (admin)';
+    document.getElementById('creditsText').textContent = '∞ tokens (admin)';
     dotsEl.innerHTML = '<span style="color:var(--green);font-size:14px;font-weight:700">∞</span>';
     document.getElementById('homeCredits').textContent = '∞';
+    document.getElementById('homeCreditsFill').style.width = '100%';
   } else {
-    document.getElementById('creditsText').textContent = c + ' crédito' + (c !== 1 ? 's' : '') + ' disponível' + (c !== 1 ? 'is' : '');
-    for (let i = 0; i < 2; i++) {
-      const d = document.createElement('div');
-      d.className = 'credit-dot' + (i < c ? '' : ' used');
-      dotsEl.appendChild(d);
-    }
+    const pct = Math.max(0, (c / max) * 100);
+    const cor = c <= 5 ? '#ff6b6b' : c <= 10 ? '#ffd04a' : 'var(--green)';
+    document.getElementById('creditsText').textContent = `${c} de ${max} tokens`;
+    dotsEl.innerHTML = `<span style="font-size:12px;color:${cor};font-weight:600">${c}/${max}</span>`;
     document.getElementById('homeCredits').textContent = c;
-    document.getElementById('homeCreditsFill').style.width = (c / 2 * 100) + '%';
+    document.getElementById('homeCreditsFill').style.width = pct + '%';
+    document.getElementById('homeCreditsFill').style.background = cor;
+
+    if (c === 0) {
+      document.getElementById('btnGenerate').disabled = true;
+      document.getElementById('btnGenerate').textContent = '⚠️ Tokens esgotados — Faça upgrade';
+    }
   }
 
-  document.getElementById('profileCredits').textContent = isUnlimited ? '∞' : c;
-  if (!isUnlimited && c === 0) {
-    document.getElementById('btnGenerate').disabled = true;
-    document.getElementById('btnGenerate').textContent = '⚠️ Créditos esgotados — Faça upgrade';
-  }
+  document.getElementById('profileCredits').textContent = isUnlimited ? '∞' : `${c} de ${max}`;
 }
 
 // ─────────────────────────────────────────
