@@ -254,6 +254,10 @@
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Meu Perfil
     </button>
+    <button class="nav-item" onclick="showPage('financeiro')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Financeiro
+    </button>
     <button class="nav-item" onclick="showPage('suporte')">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Suporte
@@ -530,6 +534,68 @@
       </div>
     </div>
   </div>
+  <!-- FINANCEIRO -->
+  <div class="page" id="page-financeiro">
+    <div style="max-width:860px;margin:0 auto">
+
+      <!-- PLANO ATUAL -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px">
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:12px">Plano atual</div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;margin-bottom:4px" id="finPlanoNome">—</div>
+          <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--green);margin-bottom:4px" id="finPlanoPreco">—</div>
+          <div style="font-size:13px;color:var(--text-muted)" id="finPlanoDesc">—</div>
+          <div style="margin-top:16px" id="finBtnUpgrade"></div>
+        </div>
+
+        <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius-lg);padding:24px">
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:12px">Renovação</div>
+          <div style="font-family:var(--font-display);font-size:48px;font-weight:800;color:var(--green);line-height:1" id="finDiasNum">—</div>
+          <div style="font-size:14px;color:var(--text-muted);margin-top:4px">dias para renovar</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:8px" id="finDataRenovacao">—</div>
+          <div style="margin-top:12px;height:6px;background:var(--border-dim);border-radius:3px;overflow:hidden">
+            <div id="finRenovacaoBar" style="height:100%;background:var(--green);border-radius:3px;transition:width .5s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOKENS DO MÊS -->
+      <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px">Tokens este mês</div>
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:800" id="finTokensTexto">—</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;color:var(--text-muted)">Usados</div>
+            <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--green)" id="finTokensUsados">0</div>
+          </div>
+        </div>
+        <div style="height:10px;background:var(--border-dim);border-radius:5px;overflow:hidden;margin-bottom:8px">
+          <div id="finTokensBar" style="height:100%;background:var(--green);border-radius:5px;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
+          <span>0</span>
+          <span id="finTokensMax">—</span>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO DE PAGAMENTOS -->
+      <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius-lg);overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border-dim);font-family:var(--font-display);font-size:15px;font-weight:700">
+          Histórico de pagamentos
+        </div>
+        <div style="padding:4px 0" id="finHistorico">
+          <div style="padding:40px;text-align:center;color:var(--text-muted);font-size:14px">
+            Nenhum pagamento registrado ainda.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- SUPORTE -->
   <div class="page" id="page-suporte">
     <div style="max-width:800px;margin:0 auto">
@@ -849,6 +915,7 @@ const pageTitles = {
   kanban:    ['Kanban Editorial','Organize seus roteiros por etapa'],
   dashboard: ['Dashboard','Acompanhe seus resultados'],
   perfil:    ['Meu Perfil','Conta, plano e histórico financeiro'],
+  financeiro:['Financeiro','Seu plano, tokens e histórico de pagamentos'],
   suporte:   ['Suporte','Estamos aqui para ajudar']
 };
 function showPage(id) {
@@ -860,6 +927,7 @@ function showPage(id) {
   document.getElementById('topbarSub').textContent = pageTitles[id][1];
   if (id === 'dashboard') updateDashboard();
   if (id === 'suporte') initSupporte();
+  if (id === 'financeiro') initFinanceiro();
 }
 
 // ─────────────────────────────────────────
@@ -1163,8 +1231,79 @@ function updateDashboard() {
 }
 
 // ─────────────────────────────────────────
-// SUPORTE
+// FINANCEIRO
 // ─────────────────────────────────────────
+function initFinanceiro() {
+  const p = PLANOS[state.plano];
+  const c = state.credits;
+  const max = state.tokensMax;
+  const usados = max === Infinity ? 0 : max - c;
+
+  // Plano atual
+  const precos = { gratuito: 'Grátis', basico: 'R$ 49,90/mês', pro: 'R$ 99,90/mês', admin: '—' };
+  const descs  = { gratuito: '2 tokens para testar', basico: '40 tokens/mês · só texto', pro: '40 tokens/mês · texto + imagens', admin: 'Acesso ilimitado' };
+
+  document.getElementById('finPlanoNome').textContent = p.nome;
+  document.getElementById('finPlanoPreco').textContent = precos[state.plano];
+  document.getElementById('finPlanoDesc').textContent = descs[state.plano];
+
+  // Botão upgrade
+  const btnEl = document.getElementById('finBtnUpgrade');
+  if (state.plano === 'gratuito' || state.plano === 'basico') {
+    btnEl.innerHTML = `<button onclick="abrirEscolhaPlano()" style="background:var(--green);color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body)">⚡ Fazer upgrade</button>`;
+  } else if (state.plano === 'pro') {
+    btnEl.innerHTML = `<span style="font-size:12px;color:var(--green)">✓ Você está no melhor plano</span>`;
+  }
+
+  // Renovação — calcula dias até o dia 1 do próximo mês
+  const hoje = new Date();
+  const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+  const diasRestantes = Math.ceil((proximoMes - hoje) / (1000 * 60 * 60 * 24));
+  const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+  const pctMes = ((diasNoMes - diasRestantes) / diasNoMes) * 100;
+
+  document.getElementById('finDiasNum').textContent = state.plano === 'gratuito' ? '—' : diasRestantes;
+  document.getElementById('finDataRenovacao').textContent = state.plano === 'gratuito'
+    ? 'Assine um plano para ver a renovação'
+    : `Renova em ${proximoMes.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })}`;
+  document.getElementById('finRenovacaoBar').style.width = state.plano === 'gratuito' ? '0%' : pctMes + '%';
+
+  // Tokens
+  const pctTokens = max === Infinity ? 100 : Math.min(100, (usados / max) * 100);
+  const corTokens = c <= 5 ? '#ff6b6b' : c <= 10 ? '#ffd04a' : 'var(--green)';
+  document.getElementById('finTokensTexto').textContent = max === Infinity ? '∞ tokens (admin)' : `${c} restantes de ${max}`;
+  document.getElementById('finTokensUsados').textContent = max === Infinity ? '∞' : usados;
+  document.getElementById('finTokensMax').textContent = max === Infinity ? '∞' : max;
+  document.getElementById('finTokensBar').style.width = pctTokens + '%';
+  document.getElementById('finTokensBar').style.background = corTokens;
+
+  // Histórico
+  const meta = state.user?.user_metadata || {};
+  const histEl = document.getElementById('finHistorico');
+
+  if (state.plano === 'gratuito') {
+    histEl.innerHTML = `
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+        <div>
+          <div style="font-weight:500">Créditos gratuitos de boas-vindas</div>
+          <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${new Date(state.user.created_at).toLocaleDateString('pt-BR')}</div>
+        </div>
+        <span style="color:#ffd04a;font-weight:700">Grátis</span>
+      </div>
+      <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">Nenhum pagamento ainda. Assine um plano para começar.</div>`;
+  } else {
+    const inicio = meta.plano_inicio ? new Date(meta.plano_inicio).toLocaleDateString('pt-BR') : '—';
+    const valorMap = { basico: 'R$ 49,90', pro: 'R$ 99,90' };
+    histEl.innerHTML = `
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+        <div>
+          <div style="font-weight:500">Plano ${p.nome} — ativação</div>
+          <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${inicio}</div>
+        </div>
+        <span style="color:var(--green);font-weight:700">${valorMap[state.plano] || '—'}</span>
+      </div>`;
+  }
+}
 const faqs = [
   { p: 'O que é um crédito/token?', r: 'Cada crédito equivale a 1 geração de 4 roteiros completos. Ao criar sua conta você recebe 2 créditos gratuitos para testar.' },
   { p: 'Posso cancelar minha assinatura?', r: 'Sim, a qualquer momento. Não há multa ou taxa de cancelamento. Seu acesso continua ativo até o fim do período pago.' },
