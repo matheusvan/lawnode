@@ -400,7 +400,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 // ─────────────────────────────────────────
 // ADMIN CONFIG
 // ─────────────────────────────────────────
-const ADMIN_EMAIL = 'yt.ujoveminvestidor@gmail.com'; // troque pelo seu email
+const ADMIN_EMAIL = 'matheusvan@gmail.com'; // troque pelo seu email
 const ADMIN_CREDITS = Infinity;
 
 // ─────────────────────────────────────────
@@ -419,6 +419,10 @@ let state = {
 // INIT
 // ─────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
+  // Configura chave da API
+  if (!localStorage.getItem('ln_ak')) {
+    localStorage.setItem('ln_ak', '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');
+  }
   const { data: { session } } = await db.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   state.user = session.user;
@@ -543,78 +547,77 @@ Gere sempre 4 variações com abordagens diferentes: Hook forte, Storytelling, E
 `;
 
 // ─────────────────────────────────────────
-// GERADOR DE ROTEIROS (com regras da OAB)
+// API DO CLAUDE — GERADOR REAL
 // ─────────────────────────────────────────
-function gerarRoteirosLocais(area, tema, formato, duracao, tom) {
-  const curto = duracao === '15 segundos' || duracao === '30 segundos';
-  const longo = duracao === '3 minutos' || duracao === '5 minutos';
+async function chamarClaudeAPI(area, tema, formato, duracao, tom) {
+  const instrucaoFormato = {
+    'Carrossel': `Estruture como CARROSSEL com slides numerados:
+SLIDE 1 (CAPA): Título impactante + subtítulo
+SLIDE 2-6 (CONTEÚDO): Cada slide com título curto + 2-3 linhas de texto
+SLIDE FINAL (CTA): Chamada para ação permitida pela OAB`,
+    'Reels / TikTok': `Estruture como ROTEIRO FALADO com timing:
+[0-3s] GANCHO: frase de abertura
+[3-30s] DESENVOLVIMENTO: conteúdo principal falado
+[últimos 5s] CTA: chamada para ação`,
+    'Story': `Estruture como STORY SEQUENCIAL (máximo 3 telas):
+TELA 1: Gancho/pergunta
+TELA 2: Informação principal  
+TELA 3: CTA`,
+    'YouTube (curto)': `Estruture como ROTEIRO YOUTUBE SHORTS:
+ABERTURA (0-3s): gancho forte
+MEIO: desenvolvimento com informação real e útil
+FINAL: CTA para inscrição/comentário`,
+    'YouTube (longo)': `Estruture como ROTEIRO YOUTUBE COMPLETO:
+INTRO (0-30s): apresentação do tema
+DESENVOLVIMENTO (vários tópicos com subtítulos)
+CONCLUSÃO: resumo + CTA`
+  }[formato] || 'Estruture de forma adequada ao formato solicitado.';
 
-  return [
-    {
-      tag: 'Hook forte',
-      texto: `🎬 GANCHO (0-3s)
-"Você conhece seus direitos sobre ${tema}? A maioria das pessoas não sabe — e isso pode custar caro."
+  const prompt = `${SYSTEM_PROMPT_LAWNODE}
 
-⚡ DESENVOLVIMENTO
-No direito ${area}, o desconhecimento sobre ${tema} é um dos erros mais comuns. E não é culpa de quem não sabe — essa informação raramente chega de forma clara.
+TAREFA: Crie 4 roteiros DIFERENTES e COMPLETOS para um advogado da área de ${area} sobre o tema "${tema}".
 
-${!curto ? `A lei garante que todo cidadão tem o direito de ser informado sobre suas garantias. No caso de ${tema}, existem pontos específicos que fazem toda a diferença na prática.\n\n` : ''}O importante é entender que você tem direitos, e conhecê-los é o primeiro passo para exercê-los com segurança.
+FORMATO SOLICITADO: ${formato}
+${instrucaoFormato}
 
-✅ CTA
-"Salva esse vídeo para ter essa informação sempre à mão. Tem dúvida sobre ${area}? Comenta aqui embaixo — respondo todos!"
+DURAÇÃO: ${duracao}
+TOM PRINCIPAL: ${tom}
 
-⚠️ ATENÇÃO (para o advogado): este conteúdo é educativo e informativo, conforme o Código de Ética da OAB.`
+IMPORTANTE:
+- Use conhecimento jurídico REAL e específico sobre "${tema}" na área de ${area}
+- Não seja genérico — traga informações concretas, leis, prazos, ou situações reais
+- Cada variação deve ter uma abordagem DIFERENTE (Hook forte, Storytelling, Educativo, Provocativo)
+- Respeite TODAS as regras do Código de Ética da OAB listadas acima
+- No final de cada roteiro, adicione: "⚠️ OAB: [breve lembrete do que cuidar neste roteiro]"
+
+Retorne EXATAMENTE neste formato JSON (sem markdown, sem código, apenas o JSON puro):
+{"roteiros":[
+  {"tag":"Hook forte","texto":"roteiro completo aqui"},
+  {"tag":"Storytelling","texto":"roteiro completo aqui"},
+  {"tag":"Educativo","texto":"roteiro completo aqui"},
+  {"tag":"Provocativo","texto":"roteiro completo aqui"}
+]}`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': localStorage.getItem('ln_ak') || '',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
     },
-    {
-      tag: 'Storytelling',
-      texto: `🎬 ABERTURA
-"Semana passada, alguém me perguntou algo sobre ${tema} que me fez pensar: quantas pessoas passam pela mesma situação sem saber o que fazer?"
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
 
-📖 HISTÓRIA
-É uma situação mais comum do que parece. A pessoa enfrenta um problema envolvendo ${area}, não sabe quais são seus direitos, e acaba tomando uma decisão desinformada.
-
-${!curto ? `A questão de ${tema} tem nuances importantes que precisam ser entendidas com calma. Cada caso tem suas particularidades, e o que vale em uma situação pode não valer em outra.\n\n` : ''}O que fica de aprendizado: informação é poder. Quem conhece seus direitos consegue agir com mais segurança e clareza.
-
-✅ CTA
-"Você já passou por uma situação assim? Conta nos comentários. E se esse conteúdo foi útil, compartilha com alguém que precisa saber disso."
-
-⚠️ ATENÇÃO (para o advogado): use um caso fictício ou sem identificar o cliente, respeitando o sigilo profissional (Art. 35 do Código de Ética).`
-    },
-    {
-      tag: 'Educativo',
-      texto: `🎬 ABERTURA
-"${!curto ? '3 coisas' : '1 coisa'} que você precisa saber sobre ${tema} no direito ${area}:"
-
-📌 PONTO 1
-Primeiro: existe um contexto legal específico para ${tema}. A legislação brasileira garante direitos que muita gente desconhece — e esse desconhecimento tem consequências práticas.
-
-${!curto ? `📌 PONTO 2
-Segundo: os prazos importam. Em situações que envolvem ${area}, agir dentro do tempo correto pode ser determinante para preservar seus direitos.
-
-📌 PONTO 3
-Terceiro: cada situação tem suas particularidades. Por isso, sempre que tiver dúvidas sobre ${tema}, o mais seguro é buscar orientação jurídica especializada.
-
-` : ''}✅ CTA
-"Salva esse vídeo e compartilha com quem precisa entender sobre ${area}. Tem mais dúvidas? Me segue para mais conteúdo assim!"
-
-⚠️ ATENÇÃO (para o advogado): conteúdo educativo é permitido pela OAB. Evite dar "conselho" direto — prefira orientar a buscar um profissional.`
-    },
-    {
-      tag: 'Provocativo',
-      texto: `🎬 GANCHO
-"Tem uma informação sobre ${tema} que quase ninguém compartilha. Hoje eu vou falar sobre isso."
-
-💡 REVELAÇÃO
-No direito ${area}, existe uma percepção muito comum que não corresponde à realidade jurídica. Sobre ${tema}, muitas pessoas acreditam em algo que, na prática, funciona de forma diferente.
-
-${!curto ? `A lei é mais protetiva do que a maioria imagina — mas só quem conhece seus direitos consegue fazer uso deles. Não é falta de direito, é falta de informação.\n\n` : ''}Saber disso antes de enfrentar uma situação difícil faz toda a diferença.
-
-✅ CTA
-"Concorda? Discorda? Comenta o que você acha. E se ficou com dúvida sobre ${area}, me segue — trago esse tipo de conteúdo toda semana."
-
-⚠️ ATENÇÃO (para o advogado): mantenha o tom informativo, sem sensacionalismo (Art. 43, parágrafo único do Código de Ética da OAB).`
-    }
-  ];
+  if (!res.ok) throw new Error('Erro na API: ' + res.status);
+  const data = await res.json();
+  const texto = data.content[0].text;
+  const clean = texto.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean).roteiros;
 }
 
 async function gerarRoteiros() {
@@ -631,11 +634,20 @@ async function gerarRoteiros() {
   document.getElementById('scriptCards').style.display = 'none';
   document.getElementById('loadingCards').style.display = 'flex';
   document.getElementById('btnGenerate').disabled = true;
-  document.getElementById('btnGenerate').textContent = '⏳ Gerando roteiros...';
+  document.getElementById('btnGenerate').textContent = '⏳ Gerando com IA...';
 
-  await new Promise(r => setTimeout(r, 1800));
-
-  const roteiros = gerarRoteirosLocais(area, tema, formato, duracao, tom);
+  let roteiros;
+  try {
+    roteiros = await chamarClaudeAPI(area, tema, formato, duracao, tom);
+  } catch(err) {
+    console.error(err);
+    showToast('❌ Erro ao gerar. Tente novamente.');
+    document.getElementById('loadingCards').style.display = 'none';
+    document.getElementById('resultsEmpty').style.display = 'flex';
+    document.getElementById('btnGenerate').disabled = false;
+    document.getElementById('btnGenerate').textContent = '⚡ Gerar 4 roteiros';
+    return;
+  }
   const cards = document.getElementById('scriptCards');
   cards.innerHTML = '';
 
