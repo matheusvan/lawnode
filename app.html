@@ -435,20 +435,35 @@
 
   <!-- KANBAN -->
   <div class="page" id="page-kanban">
-    <div class="kanban-board">
+
+    <!-- KANBAN BOARD -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:700">Quadro editorial</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px">Arraste os cards entre as colunas para organizar seu conteúdo</div>
+      </div>
+    </div>
+
+    <div class="kanban-board" style="margin-bottom:32px">
       <div class="kanban-col">
         <div class="kanban-col-header">
-          <div class="kanban-col-title"><div class="kanban-dot" style="background:#aaa"></div>Ideias</div>
-          <span class="kanban-count" id="count-ideias">0</span>
+          <div class="kanban-col-title">
+            <div style="width:10px;height:10px;border-radius:50%;background:#888;flex-shrink:0"></div>
+            💡 Ideias
+          </div>
+          <span class="kanban-count" id="count-ideias" style="background:rgba(255,255,255,0.06);color:var(--text-muted);font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border-dim)">0</span>
         </div>
         <div class="kanban-cards" id="col-ideias" ondragover="allowDrop(event)" ondrop="drop(event,'ideias')">
-          <div class="kanban-empty"><span>📝</span>Salve roteiros aqui</div>
+          <div class="kanban-empty"><span>💡</span>Salve roteiros aqui</div>
         </div>
       </div>
       <div class="kanban-col">
         <div class="kanban-col-header">
-          <div class="kanban-col-title"><div class="kanban-dot" style="background:#ffd04a"></div>Em produção</div>
-          <span class="kanban-count" id="count-producao">0</span>
+          <div class="kanban-col-title">
+            <div style="width:10px;height:10px;border-radius:50%;background:#ffd04a;flex-shrink:0"></div>
+            🎬 Em produção
+          </div>
+          <span class="kanban-count" id="count-producao" style="background:rgba(255,208,74,0.1);color:#ffd04a;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid rgba(255,208,74,0.2)">0</span>
         </div>
         <div class="kanban-cards" id="col-producao" ondragover="allowDrop(event)" ondrop="drop(event,'producao')">
           <div class="kanban-empty"><span>🎬</span>Arraste roteiros aqui</div>
@@ -456,14 +471,58 @@
       </div>
       <div class="kanban-col">
         <div class="kanban-col-header">
-          <div class="kanban-col-title"><div class="kanban-dot" style="background:#3dff5c"></div>Publicado</div>
-          <span class="kanban-count" id="count-publicado">0</span>
+          <div class="kanban-col-title">
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
+            ✅ Publicado
+          </div>
+          <span class="kanban-count" id="count-publicado" style="background:var(--green-glow);color:var(--green);font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border)">0</span>
         </div>
         <div class="kanban-cards" id="col-publicado" ondragover="allowDrop(event)" ondrop="drop(event,'publicado')">
           <div class="kanban-empty"><span>✅</span>Conteúdos publicados</div>
         </div>
       </div>
     </div>
+
+    <!-- CALENDÁRIO EDITORIAL -->
+    <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius-lg);overflow:hidden">
+      <div style="padding:16px 24px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:700">📅 Calendário editorial</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button onclick="mudarMes(-1)" style="background:none;border:1px solid var(--border-dim);border-radius:8px;color:var(--text-muted);width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.color='var(--text-muted)'">‹</button>
+          <span style="font-family:var(--font-display);font-size:15px;font-weight:600;min-width:160px;text-align:center" id="calMesAno">—</span>
+          <button onclick="mudarMes(1)" style="background:none;border:1px solid var(--border-dim);border-radius:8px;color:var(--text-muted);width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.color='var(--text-muted)'">›</button>
+        </div>
+      </div>
+      <div style="padding:16px 24px">
+        <!-- Dias da semana -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+          ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => `<div style="text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding:4px 0">${d}</div>`).join('')}
+        </div>
+        <!-- Grid do calendário -->
+        <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+      </div>
+      <!-- Legenda -->
+      <div style="padding:12px 24px;border-top:1px solid var(--border-dim);display:flex;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><div style="width:8px;height:8px;border-radius:2px;background:#ffd04a"></div>Em produção</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><div style="width:8px;height:8px;border-radius:2px;background:var(--green)"></div>Publicado</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><div style="width:8px;height:8px;border-radius:2px;background:rgba(61,255,92,0.3);border:1px solid var(--green)"></div>Hoje</div>
+      </div>
+    </div>
+
+    <!-- MODAL AGENDAR DATA -->
+    <div id="agendarModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;align-items:center;justify-content:center;padding:20px">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:360px">
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:6px">📅 Agendar publicação</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px" id="agendarTitulo">—</div>
+        <label style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);display:block;margin-bottom:6px">Data de publicação</label>
+        <input type="date" id="agendarData" style="width:100%;background:var(--bg3);border:1px solid var(--border-dim);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;margin-bottom:16px;color-scheme:dark"/>
+        <div style="display:flex;gap:8px">
+          <button onclick="fecharAgendarModal()" style="flex:1;background:none;border:1px solid var(--border-dim);border-radius:8px;color:var(--text-muted);padding:10px;font-size:13px;cursor:pointer;font-family:var(--font-body)">Cancelar</button>
+          <button onclick="confirmarAgendamento()" style="flex:1;background:var(--green);border:none;border-radius:8px;color:#000;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body)">Agendar</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- DASHBOARD -->
@@ -932,6 +991,7 @@ function showPage(id) {
   if (id === 'dashboard') updateDashboard();
   if (id === 'suporte') initSupporte();
   if (id === 'financeiro') initFinanceiro();
+  if (id === 'kanban') renderCalendario();
 }
 
 // ─────────────────────────────────────────
@@ -1161,27 +1221,160 @@ function salvarNoKanban(idx, area, tema, formato) {
 }
 
 function renderKanban() {
+  const coresArea = {
+    'Trabalhista': '#3dff5c', 'Família e Sucessões': '#ff6b9d', 'Criminal': '#ff6b6b',
+    'Previdenciário': '#ffd04a', 'Consumidor': '#6baaff', 'Imobiliário': '#ff9f6b',
+    'Empresarial': '#b06bff', 'Civil': '#6bffee', 'Tributário': '#ffcc6b',
+    'Ambiental': '#6bff9f', 'Digital': '#6b9fff', 'Constitucional': '#ff6bcc'
+  };
+
   ['ideias','producao','publicado'].forEach(col => {
     const el = document.getElementById('col-'+col);
     el.innerHTML = '';
     const items = state.kanban[col];
     document.getElementById('count-'+col).textContent = items.length;
+
     if (items.length === 0) {
-      const labels = { ideias:['📝','Salve roteiros aqui'], producao:['🎬','Arraste roteiros aqui'], publicado:['✅','Conteúdos publicados'] };
+      const labels = {
+        ideias:['💡','Salve roteiros aqui'],
+        producao:['🎬','Arraste roteiros aqui'],
+        publicado:['✅','Conteúdos publicados']
+      };
       el.innerHTML = `<div class="kanban-empty"><span>${labels[col][0]}</span>${labels[col][1]}</div>`;
       return;
     }
+
     items.forEach(item => {
+      const cor = coresArea[item.area] || 'var(--green)';
+      const dataStr = item.dataPublicacao
+        ? `<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:${col === 'publicado' ? 'var(--green)' : '#ffd04a'};margin-top:8px">
+            📅 ${new Date(item.dataPublicacao + 'T00:00:00').toLocaleDateString('pt-BR')}
+           </div>`
+        : col !== 'ideias' ? `<button onclick="abrirAgendarModal('${item.id}')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-dim);border-radius:4px;color:var(--text-muted);padding:3px 8px;cursor:pointer;font-family:var(--font-body);transition:all .15s" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.color='var(--text-muted)'">+ Agendar data</button>` : '';
+
       const card = document.createElement('div');
       card.className = 'kanban-card';
       card.draggable = true;
       card.dataset.id = item.id;
-      card.innerHTML = `<div class="kanban-card-title">${item.titulo}</div><div class="kanban-card-meta"><span class="kanban-pill">${item.area}</span><span class="kanban-pill">${item.formato}</span></div>`;
+      card.style.borderLeft = `3px solid ${cor}`;
+      card.innerHTML = `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="font-size:13px;font-weight:600;line-height:1.4;flex:1">${item.titulo}</div>
+          <button onclick="deletarCard('${item.id}','${col}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#ff6b6b'" onmouseout="this.style.color='var(--text-muted)'">×</button>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+          <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:${cor}18;color:${cor};border:1px solid ${cor}30;font-weight:500">${item.area}</span>
+          <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border-dim)">${item.formato}</span>
+        </div>
+        ${dataStr}`;
+
       card.addEventListener('dragstart', () => { state.dragItem = { id: item.id, fromCol: col }; });
       el.appendChild(card);
     });
   });
+
+  renderCalendario();
   updateDashboard();
+}
+
+function deletarCard(id, col) {
+  state.kanban[col] = state.kanban[col].filter(c => c.id !== id);
+  renderKanban();
+  showToast('🗑️ Card removido.');
+}
+
+// ─────────────────────────────────────────
+// CALENDÁRIO
+// ─────────────────────────────────────────
+let calAtual = new Date();
+
+function mudarMes(dir) {
+  calAtual = new Date(calAtual.getFullYear(), calAtual.getMonth() + dir, 1);
+  renderCalendario();
+}
+
+function renderCalendario() {
+  const ano = calAtual.getFullYear();
+  const mes = calAtual.getMonth();
+  const hoje = new Date();
+
+  document.getElementById('calMesAno').textContent =
+    calAtual.toLocaleDateString('pt-BR', { month:'long', year:'numeric' })
+    .replace(/^\w/, c => c.toUpperCase());
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+
+  // Mapeia eventos por data
+  const eventos = {};
+  [...state.kanban.producao, ...state.kanban.publicado].forEach(item => {
+    if (item.dataPublicacao) {
+      if (!eventos[item.dataPublicacao]) eventos[item.dataPublicacao] = [];
+      eventos[item.dataPublicacao].push(item);
+    }
+  });
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // Dias vazios antes do primeiro dia
+  for (let i = 0; i < primeiroDia; i++) {
+    grid.innerHTML += `<div style="min-height:70px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid transparent"></div>`;
+  }
+
+  // Dias do mês
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const dataKey = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const isHoje = hoje.getDate() === dia && hoje.getMonth() === mes && hoje.getFullYear() === ano;
+    const evsDia = eventos[dataKey] || [];
+
+    const evHtml = evsDia.slice(0,2).map(ev => {
+      const isPub = state.kanban.publicado.some(k => k.id === ev.id);
+      const bg = isPub ? 'rgba(61,255,92,0.15)' : 'rgba(255,208,74,0.15)';
+      const cor = isPub ? 'var(--green)' : '#ffd04a';
+      return `<div style="font-size:9px;padding:2px 4px;border-radius:3px;background:${bg};color:${cor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${ev.titulo}</div>`;
+    }).join('') + (evsDia.length > 2 ? `<div style="font-size:9px;color:var(--text-muted);margin-top:2px">+${evsDia.length-2} mais</div>` : '');
+
+    grid.innerHTML += `
+      <div style="min-height:70px;border-radius:8px;background:${isHoje ? 'rgba(61,255,92,0.06)' : 'var(--bg3)'};border:1px solid ${isHoje ? 'var(--green)' : 'var(--border-dim)'};padding:6px;cursor:${evsDia.length ? 'pointer' : 'default'};transition:border-color .15s" onmouseover="this.style.borderColor='${isHoje ? 'var(--green)' : 'rgba(255,255,255,0.12)'}'" onmouseout="this.style.borderColor='${isHoje ? 'var(--green)' : 'var(--border-dim)'}'">
+        <div style="font-size:12px;font-weight:${isHoje ? '700' : '400'};color:${isHoje ? 'var(--green)' : 'var(--text-secondary)'};margin-bottom:2px">${dia}</div>
+        ${evHtml}
+      </div>`;
+  }
+}
+
+// ─────────────────────────────────────────
+// AGENDAR DATA
+// ─────────────────────────────────────────
+let agendarCardId = null;
+
+function abrirAgendarModal(id) {
+  agendarCardId = id;
+  const item = [...state.kanban.producao, ...state.kanban.publicado].find(c => c.id === id);
+  if (!item) return;
+  document.getElementById('agendarTitulo').textContent = item.titulo;
+  document.getElementById('agendarData').value = item.dataPublicacao || '';
+  const modal = document.getElementById('agendarModal');
+  modal.style.display = 'flex';
+}
+
+function fecharAgendarModal() {
+  document.getElementById('agendarModal').style.display = 'none';
+  agendarCardId = null;
+}
+
+function confirmarAgendamento() {
+  const data = document.getElementById('agendarData').value;
+  if (!data) { showToast('⚠️ Escolha uma data.'); return; }
+
+  ['producao','publicado'].forEach(col => {
+    const item = state.kanban[col].find(c => c.id === agendarCardId);
+    if (item) item.dataPublicacao = data;
+  });
+
+  fecharAgendarModal();
+  renderKanban();
+  showToast('📅 Data de publicação agendada!');
 }
 
 function allowDrop(e) { e.preventDefault(); }
