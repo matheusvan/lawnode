@@ -254,6 +254,10 @@
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Meu Perfil
     </button>
+    <button class="nav-item" onclick="showPage('suporte')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Suporte
+    </button>
   </nav>
   <div class="credits-badge" id="creditsBadge">
     <div class="credits-dots" id="creditsDotsEl"></div>
@@ -526,6 +530,53 @@
       </div>
     </div>
   </div>
+  <!-- SUPORTE -->
+  <div class="page" id="page-suporte">
+    <div style="max-width:800px;margin:0 auto">
+
+      <!-- HORÁRIO -->
+      <div style="background:var(--green-glow);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:24px">🕐</span>
+        <div>
+          <div style="font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:3px">Horário de atendimento</div>
+          <div style="font-size:13px;color:var(--text-secondary)">Segunda a sexta-feira, das <strong style="color:var(--green)">9h às 18h</strong> (horário de Brasília)</div>
+        </div>
+        <div id="statusAtendimento" style="margin-left:auto;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px"></div>
+      </div>
+
+      <!-- CARDS DE CONTATO -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px">
+
+        <!-- CHAT AO VIVO -->
+        <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius-lg);padding:24px">
+          <div style="font-size:28px;margin-bottom:12px">💬</div>
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:6px">Chat ao vivo</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">Fale com a gente em tempo real. Resposta imediata no horário comercial.</div>
+          <button onclick="if(window.$crisp){$crisp.push(['do','chat:open'])}else{alert('Chat indisponível no momento.')}" style="width:100%;background:var(--green);color:#000;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:background .2s" onmouseover="this.style.background='#5fff78'" onmouseout="this.style.background='var(--green)'">
+            Abrir chat →
+          </button>
+        </div>
+
+        <!-- EMAIL -->
+        <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius-lg);padding:24px">
+          <div style="font-size:28px;margin-bottom:12px">📧</div>
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:6px">E-mail</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">Prefere escrever? Mande um e-mail e respondemos em até 1 dia útil.</div>
+          <a href="mailto:lawnode.suporte@gmail.com" style="display:block;width:100%;background:none;border:1px solid var(--border-dim);border-radius:8px;padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);color:var(--text-secondary);text-align:center;text-decoration:none;transition:all .2s;box-sizing:border-box" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.color='var(--text-secondary)'">
+            lawnode.suporte@gmail.com
+          </a>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:16px">Perguntas frequentes</div>
+
+      <div id="faqList" style="display:flex;flex-direction:column;gap:8px">
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -754,7 +805,8 @@ const pageTitles = {
   gerador:   ['Gerador de Roteiros','Crie conteúdo jurídico em segundos'],
   kanban:    ['Kanban Editorial','Organize seus roteiros por etapa'],
   dashboard: ['Dashboard','Acompanhe seus resultados'],
-  perfil:    ['Meu Perfil','Conta, plano e histórico financeiro']
+  perfil:    ['Meu Perfil','Conta, plano e histórico financeiro'],
+  suporte:   ['Suporte','Estamos aqui para ajudar']
 };
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -764,6 +816,7 @@ function showPage(id) {
   document.getElementById('topbarTitle').textContent = pageTitles[id][0];
   document.getElementById('topbarSub').textContent = pageTitles[id][1];
   if (id === 'dashboard') updateDashboard();
+  if (id === 'suporte') initSupporte();
 }
 
 // ─────────────────────────────────────────
@@ -1067,8 +1120,52 @@ function updateDashboard() {
 }
 
 // ─────────────────────────────────────────
-// LOGOUT
+// SUPORTE
 // ─────────────────────────────────────────
+const faqs = [
+  { p: 'O que é um crédito/token?', r: 'Cada crédito equivale a 1 geração de 4 roteiros completos. Ao criar sua conta você recebe 2 créditos gratuitos para testar.' },
+  { p: 'Posso cancelar minha assinatura?', r: 'Sim, a qualquer momento. Não há multa ou taxa de cancelamento. Seu acesso continua ativo até o fim do período pago.' },
+  { p: 'Os roteiros seguem as regras da OAB?', r: 'Sim! Todos os roteiros são gerados respeitando o Código de Ética da OAB (Resolução 02/2015), sem captação de clientela, sem promessa de resultado e com linguagem informativa.' },
+  { p: 'Quais formatos de conteúdo são suportados?', r: 'Reels, TikTok, Stories, Carrossel e YouTube (curto e longo). Cada formato tem estrutura específica adaptada para o canal.' },
+  { p: 'Posso usar para qualquer área do direito?', r: 'Sim! O LawNode suporta 12+ áreas: Trabalhista, Família, Criminal, Previdenciário, Consumidor, Imobiliário, Empresarial, Civil, Tributário, Ambiental, Digital e Constitucional.' },
+  { p: 'Diferença entre plano Básico e Pro?', r: 'O plano Básico inclui roteiros ilimitados em texto, Kanban e Dashboard. O plano Pro inclui tudo isso mais geração automática de imagens para carrossel e suporte prioritário.' },
+  { p: 'Tenho um cupom, onde uso?', r: 'Clica em "Fazer upgrade" no painel e depois em "Tenho um cupom". Digite o código e ganhe gerações gratuitas sem precisar de cartão.' },
+];
+
+function initSupporte() {
+  // Status de atendimento
+  const agora = new Date();
+  const dia = agora.getDay(); // 0=dom, 6=sab
+  const hora = agora.getHours();
+  const aberto = dia >= 1 && dia <= 5 && hora >= 9 && hora < 18;
+  const statusEl = document.getElementById('statusAtendimento');
+  if (statusEl) {
+    statusEl.textContent = aberto ? '🟢 Online agora' : '🔴 Fora do horário';
+    statusEl.style.background = aberto ? 'rgba(61,255,92,0.1)' : 'rgba(255,80,80,0.1)';
+    statusEl.style.color = aberto ? 'var(--green)' : '#ff6b6b';
+  }
+
+  // FAQ
+  const faqEl = document.getElementById('faqList');
+  if (!faqEl) return;
+  faqEl.innerHTML = faqs.map((f, i) => `
+    <div style="background:var(--bg2);border:1px solid var(--border-dim);border-radius:var(--radius);overflow:hidden">
+      <button onclick="toggleFaq(${i})" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:none;border:none;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);text-align:left;gap:12px">
+        <span>${f.p}</span>
+        <span id="faq-icon-${i}" style="color:var(--text-muted);font-size:18px;flex-shrink:0;transition:transform .2s">+</span>
+      </button>
+      <div id="faq-body-${i}" style="display:none;padding:0 20px 16px;font-size:13px;color:var(--text-muted);line-height:1.7;border-top:1px solid var(--border-dim)">${f.r}</div>
+    </div>`).join('');
+}
+
+function toggleFaq(i) {
+  const body = document.getElementById(`faq-body-${i}`);
+  const icon = document.getElementById(`faq-icon-${i}`);
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  icon.textContent = open ? '+' : '−';
+  icon.style.transform = open ? 'none' : 'rotate(0deg)';
+}
 async function handleLogout() {
   await db.auth.signOut();
   window.location.href = 'index.html';
