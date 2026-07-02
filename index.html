@@ -1510,6 +1510,7 @@
         document.getElementById('inputNome').value = '';
         document.getElementById('inputEmail').value = '';
         document.getElementById('inputSenha').value = '';
+        document.getElementById('inputSenhaConfirm').value = '';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('modalError').textContent = '';
         const btn = document.getElementById('btnCadastro');
@@ -1573,10 +1574,12 @@
         });
 
         if (error) {
-          if (error.message.includes('Invalid login')) {
+          if (error.message.includes('Invalid login') || error.message.includes('invalid_credentials')) {
             erro.textContent = 'E-mail ou senha incorretos. Tente novamente.';
+          } else if (error.message.includes('Email not confirmed')) {
+            erro.textContent = 'E-mail não confirmado. Verifique sua caixa de entrada.';
           } else {
-            erro.textContent = 'Erro ao entrar: ' + error.message;
+            erro.textContent = 'Erro: ' + error.message;
           }
           erro.style.display = 'block';
           btn.textContent = 'Entrar na minha conta →';
