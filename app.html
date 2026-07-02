@@ -569,7 +569,10 @@
 
     <!-- STEP 1: ESCOLHA -->
     <div id="checkoutStep1">
-      <div class="checkout-title" id="checkoutTitle">Assinar LawNode</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="closeCheckout();abrirEscolhaPlano();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:0;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">←</button>
+        <div class="checkout-title" id="checkoutTitle" style="margin:0">Assinar LawNode</div>
+      </div>
       <div class="checkout-sub">Cancele quando quiser. Sem taxa de adesão.</div>
 
       <!-- ABAS: PLANO PAGO | CUPOM -->
