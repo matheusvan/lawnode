@@ -358,7 +358,7 @@
     <div class="home-plan-card">
       <div class="home-plan-info">
         <div class="home-plan-name" id="homePlanName">Plano Gratuito</div>
-        <div class="home-plan-desc" id="homePlanDesc">2 roteiros para testar o LawNode</div>
+        <div class="home-plan-desc" id="homePlanDesc">—</div>
         <div class="home-credits-bar">
           <div class="home-credits-fill" id="homeCreditsFill" style="width:100%"></div>
         </div>
@@ -505,7 +505,7 @@
           <div class="profile-section-title">Planos disponíveis</div>
           <div class="plan-cards">
             <div class="plan-card" id="planFree">
-              <div><div class="plan-card-name">Gratuito</div><div class="plan-card-price">2 tokens para testar</div></div>
+              <div><div class="plan-card-name">Gratuito</div><div class="plan-card-price" id="planFreeDesc">2 tokens para testar</div></div>
               <span class="plan-card-badge" id="badgeFree" style="display:none">Atual</span>
             </div>
             <div class="plan-card" id="planBasico">
@@ -865,10 +865,12 @@ function loadUserUI() {
     document.getElementById('profilePlanBadge').textContent = `⚡ ${planLabel}`;
     document.getElementById('homePlanName').textContent = planLabel;
     document.getElementById('homePlanDesc').textContent =
-      state.plano === 'gratuito' ? '2 tokens para testar o LawNode' :
-      state.plano === 'basico'   ? `50 tokens/mês · Roteiros em texto` :
-                                   `30 tokens/mês · Roteiros + imagens`;
+      state.plano === 'gratuito' ? `${state.tokensMax} tokens disponíveis` :
+      state.plano === 'basico'   ? `40 tokens/mês · Roteiros em texto` :
+                                   `40 tokens/mês · Roteiros + imagens`;
     document.getElementById('statCreditosSub').textContent = `de ${p.tokens === Infinity ? '∞' : p.tokens} tokens`;
+    const planFreeDesc = document.getElementById('planFreeDesc');
+    if (planFreeDesc) planFreeDesc.textContent = `${state.tokensMax} tokens disponíveis`;
     if (state.plano !== 'gratuito') {
       document.getElementById('homeBtnUpgrade').style.display = 'none';
     }
