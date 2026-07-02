@@ -276,7 +276,7 @@
       <div class="topbar-title" id="topbarTitle">Gerador de Roteiros</div>
       <div class="topbar-sub" id="topbarSub">Crie conteúdo jurídico em segundos</div>
     </div>
-    <button class="btn-upgrade" onclick="abrirCheckout('pro')">⚡ Fazer upgrade</button>
+    <button class="btn-upgrade" onclick="abrirEscolhaPlano()">⚡ Fazer upgrade</button>
   </div>
 
   <!-- HOME -->
@@ -355,7 +355,7 @@
           <div class="home-credits-fill" id="homeCreditsFill" style="width:100%"></div>
         </div>
       </div>
-      <button class="btn-upgrade" onclick="abrirCheckout('pro')" id="homeBtnUpgrade">⚡ Fazer upgrade</button>
+      <button class="btn-upgrade" onclick="abrirEscolhaPlano()" id="homeBtnUpgrade">⚡ Fazer upgrade</button>
     </div>
   </div>
 
@@ -529,6 +529,38 @@
 </main>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL ESCOLHA DE PLANO -->
+<div class="checkout-overlay" id="planOverlay">
+  <div class="checkout-modal">
+    <button class="checkout-close" onclick="document.getElementById('planOverlay').classList.remove('open');document.body.style.overflow=''">×</button>
+    <div class="checkout-title">Escolha seu plano</div>
+    <div class="checkout-sub" style="margin-bottom:24px">Cancele quando quiser. Sem taxa de adesão.</div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div onclick="fecharEscolhaPlano('basico')" style="background:var(--bg3);border:1px solid var(--border-dim);border-radius:var(--radius-lg);padding:20px 24px;cursor:pointer;transition:border-color .2s,transform .15s" onmouseover="this.style.borderColor='var(--green)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border-dim)';this.style.transform='none'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-family:var(--font-display);font-size:17px;font-weight:700">Básico</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--green)">R$ 59,90<span style="font-size:13px;color:var(--text-muted);font-weight:400">/mês</span></span>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted)">Roteiros ilimitados em texto · Kanban · Dashboard</div>
+      </div>
+
+      <div onclick="fecharEscolhaPlano('pro')" style="background:rgba(61,255,92,0.03);border:1px solid var(--green);border-radius:var(--radius-lg);padding:20px 24px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+        <div style="position:absolute;top:-12px;left:20px;background:var(--green);color:#000;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px">Mais popular</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-family:var(--font-display);font-size:17px;font-weight:700">Pro</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--green)">R$ 99,90<span style="font-size:13px;color:var(--text-muted);font-weight:400">/mês</span></span>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted)">Tudo do Básico + geração de imagens · YouTube · Suporte prioritário</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;text-align:center">
+      <a href="#" onclick="fecharEscolhaPlanoParaCupom();return false;" style="font-size:13px;color:var(--green);text-decoration:none">🎟️ Tenho um cupom promocional</a>
+    </div>
+  </div>
+</div>
 
 <!-- CHECKOUT MODAL -->
 <div class="checkout-overlay" id="checkoutOverlay">
@@ -1045,6 +1077,29 @@ async function handleLogout() {
 let currentPlano = 'basico';
 let stripeElements = null;
 let paymentElement = null;
+
+// ─────────────────────────────────────────
+// ESCOLHA DE PLANO
+// ─────────────────────────────────────────
+function abrirEscolhaPlano() {
+  document.getElementById('planOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharEscolhaPlano(plano) {
+  document.getElementById('planOverlay').classList.remove('open');
+  abrirCheckout(plano);
+}
+
+function fecharEscolhaPlanoParaCupom() {
+  document.getElementById('planOverlay').classList.remove('open');
+  abrirCheckout('pro');
+  setTimeout(() => setCheckoutTab('cupom'), 100);
+}
+
+document.getElementById('planOverlay').addEventListener('click', function(e) {
+  if (e.target === this) { this.classList.remove('open'); document.body.style.overflow = ''; }
+});
 
 function setCheckoutTab(tab) {
   const isCupom = tab === 'cupom';
