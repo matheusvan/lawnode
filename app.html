@@ -424,60 +424,33 @@
   <div class="checkout-modal">
     <button class="checkout-close" onclick="closeCheckout()">×</button>
 
-    <!-- STEP 1: ESCOLHA DO MÉTODO -->
+    <!-- STEP 1: PAGAMENTO -->
     <div id="checkoutStep1">
       <div class="checkout-title" id="checkoutTitle">Assinar LawNode</div>
-      <div class="checkout-sub" id="checkoutSubtitle">Cancele quando quiser. Sem taxa de adesão.</div>
+      <div class="checkout-sub">Cancele quando quiser. Sem taxa de adesão.</div>
 
       <div class="checkout-price">
         <span class="checkout-price-val" id="checkoutPriceVal">R$ 59,90</span>
         <span class="checkout-price-period">/mês</span>
       </div>
 
-      <div class="checkout-methods">
-        <button class="method-btn active" id="btnCartao" onclick="setMethod('cartao')">💳 Cartão</button>
-        <button class="method-btn" id="btnPix" onclick="setMethod('pix')">⚡ PIX</button>
-      </div>
+      <!-- STRIPE ELEMENTS -->
+      <div id="payment-element" style="margin-bottom:16px"></div>
+      <div id="payment-message" style="color:#ff6b6b;font-size:13px;margin-bottom:12px;display:none"></div>
 
-      <!-- FORM CARTÃO -->
-      <div id="formCartao" class="checkout-form">
-        <input class="checkout-input" type="text" id="cardName" placeholder="Nome no cartão" maxlength="60"/>
-        <input class="checkout-input" type="text" id="cardNumber" placeholder="Número do cartão" maxlength="19" oninput="formatCard(this)"/>
-        <div class="checkout-row">
-          <input class="checkout-input" type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)"/>
-          <input class="checkout-input" type="text" id="cardCVV" placeholder="CVV" maxlength="4"/>
-        </div>
-        <button class="checkout-submit" id="btnPagar" onclick="processarCartao()">
-          🔒 Pagar R$ <span id="btnValor">59,90</span>
-        </button>
-      </div>
-
-      <!-- FORM PIX -->
-      <div id="formPix" style="display:none">
-        <button class="checkout-submit" onclick="gerarPix()">⚡ Gerar QR Code PIX</button>
-      </div>
+      <button class="checkout-submit" id="btnPagar" onclick="processarPagamento()">
+        🔒 Pagar R$ <span id="btnValor">59,90</span>
+      </button>
 
       <div class="checkout-security">🔒 Pagamento seguro via Stripe · Seus dados estão protegidos</div>
     </div>
 
-    <!-- STEP 2: QR CODE PIX -->
+    <!-- STEP 2: SUCESSO -->
     <div id="checkoutStep2" style="display:none">
-      <div class="checkout-title">PIX gerado!</div>
-      <div class="checkout-sub">Escaneie o QR Code ou copie o código</div>
-      <div class="pix-area">
-        <div class="pix-qr" id="pixQR">Gerando QR Code...</div>
-        <div class="pix-code" id="pixCode">Aguardando...</div>
-        <button class="pix-copy" onclick="copiarPix()">📋 Copiar código PIX</button>
-        <p style="font-size:12px;color:var(--text-muted);margin-top:16px">Após o pagamento, seu plano será ativado automaticamente em até 1 minuto.</p>
-      </div>
-    </div>
-
-    <!-- STEP 3: SUCESSO -->
-    <div id="checkoutStep3" style="display:none">
       <div class="checkout-success">
         <div class="checkout-success-icon">🎉</div>
         <div class="checkout-title">Pagamento confirmado!</div>
-        <div class="checkout-sub" style="margin-top:8px">Seu plano foi ativado com sucesso. Bem-vindo ao LawNode!</div>
+        <div class="checkout-sub" style="margin-top:8px">Seu plano foi ativado com sucesso. Bem-vindo ao LawNode Pro!</div>
         <button class="checkout-submit" style="margin-top:24px" onclick="closeCheckout()">Continuar usando →</button>
       </div>
     </div>
@@ -915,13 +888,13 @@ async function handleLogout() {
 }
 
 // ─────────────────────────────────────────
-// CHECKOUT
+// CHECKOUT COM STRIPE ELEMENTS
 // ─────────────────────────────────────────
 let currentPlano = 'basico';
-let currentMethod = 'cartao';
-let pixCodeData = '';
+let stripeElements = null;
+let paymentElement = null;
 
-function abrirCheckout(plano) {
+async function abrirCheckout(plano) {
   currentPlano = plano;
   const precos = { basico: '59,90', pro: '99,90' };
   const nomes  = { basico: 'LawNode Básico', pro: 'LawNode Pro' };
@@ -930,160 +903,95 @@ function abrirCheckout(plano) {
   document.getElementById('btnValor').textContent = precos[plano];
   document.getElementById('checkoutStep1').style.display = 'block';
   document.getElementById('checkoutStep2').style.display = 'none';
-  document.getElementById('checkoutStep3').style.display = 'none';
-  setMethod('cartao');
+  document.getElementById('payment-message').style.display = 'none';
   document.getElementById('checkoutOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  // Cria PaymentIntent e monta Stripe Elements
+  try {
+    const session = await db.auth.getSession();
+    const token = session.data.session?.access_token;
+
+    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/create-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        plano: currentPlano,
+        email: state.user.email,
+        userId: state.user.id,
+      })
+    });
+
+    const { clientSecret, error } = await res.json();
+    if (error) throw new Error(error);
+
+    const appearance = {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#3dff5c',
+        colorBackground: '#141414',
+        colorText: '#ffffff',
+        colorDanger: '#ff6b6b',
+        fontFamily: 'DM Sans, sans-serif',
+        borderRadius: '8px',
+      }
+    };
+
+    stripeElements = stripeClient.elements({ appearance, clientSecret });
+    paymentElement = stripeElements.create('payment');
+    paymentElement.mount('#payment-element');
+
+  } catch(err) {
+    showToast('❌ Erro ao carregar checkout. Tente novamente.');
+    closeCheckout();
+  }
 }
 
 function closeCheckout() {
   document.getElementById('checkoutOverlay').classList.remove('open');
   document.body.style.overflow = '';
+  if (paymentElement) { paymentElement.destroy(); paymentElement = null; }
+  stripeElements = null;
 }
 
 document.getElementById('checkoutOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeCheckout();
 });
 
-function setMethod(method) {
-  currentMethod = method;
-  document.getElementById('btnCartao').classList.toggle('active', method === 'cartao');
-  document.getElementById('btnPix').classList.toggle('active', method === 'pix');
-  document.getElementById('formCartao').style.display = method === 'cartao' ? 'flex' : 'none';
-  document.getElementById('formPix').style.display = method === 'pix' ? 'block' : 'none';
-}
-
-function formatCard(input) {
-  let v = input.value.replace(/\D/g, '').substring(0, 16);
-  input.value = v.replace(/(.{4})/g, '$1 ').trim();
-}
-
-function formatExpiry(input) {
-  let v = input.value.replace(/\D/g, '').substring(0, 4);
-  if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
-  input.value = v;
-}
-
-async function processarCartao() {
-  const nome   = document.getElementById('cardName').value.trim();
-  const numero = document.getElementById('cardNumber').value.replace(/\s/g, '');
-  const expiry = document.getElementById('cardExpiry').value;
-  const cvv    = document.getElementById('cardCVV').value.trim();
-
-  if (!nome || numero.length < 16 || !expiry || !cvv) {
-    showToast('⚠️ Preencha todos os dados do cartão.');
-    return;
-  }
+async function processarPagamento() {
+  if (!stripeElements) return;
 
   const btn = document.getElementById('btnPagar');
   btn.disabled = true;
   btn.textContent = '⏳ Processando...';
 
-  try {
-    // 1. Cria PaymentMethod no Stripe
-    const [expMes, expAno] = expiry.split('/');
-    const { paymentMethod, error: pmError } = await stripeClient.createPaymentMethod({
-      type: 'card',
-      card: {
-        number: numero,
-        exp_month: parseInt(expMes),
-        exp_year: parseInt('20' + expAno),
-        cvc: cvv,
-      },
-      billing_details: { name: nome, email: state.user.email },
-    });
+  const msgEl = document.getElementById('payment-message');
+  msgEl.style.display = 'none';
 
-    if (pmError) throw new Error(pmError.message);
+  const { error } = await stripeClient.confirmPayment({
+    elements: stripeElements,
+    confirmParams: { return_url: window.location.href },
+    redirect: 'if_required',
+  });
 
-    // 2. Cria PaymentIntent via Edge Function
-    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/create-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await db.auth.getSession()).data.session?.access_token}`
-      },
-      body: JSON.stringify({
-        plano: currentPlano,
-        email: state.user.email,
-        userId: state.user.id,
-      })
-    });
-
-    const { clientSecret, error: fnError } = await res.json();
-    if (fnError) throw new Error(fnError);
-
-    // 3. Confirma o pagamento
-    const { error: confirmError } = await stripeClient.confirmCardPayment(clientSecret, {
-      payment_method: paymentMethod.id,
-    });
-
-    if (confirmError) throw new Error(confirmError.message);
-
-    // 4. Sucesso!
-    document.getElementById('checkoutStep1').style.display = 'none';
-    document.getElementById('checkoutStep3').style.display = 'block';
-    atualizarPlanoLocal(currentPlano);
-
-  } catch(err) {
-    showToast('❌ ' + (err.message || 'Erro no pagamento. Tente novamente.'));
+  if (error) {
+    msgEl.textContent = error.message;
+    msgEl.style.display = 'block';
     btn.disabled = false;
     btn.innerHTML = '🔒 Pagar R$ <span id="btnValor">' + (currentPlano === 'basico' ? '59,90' : '99,90') + '</span>';
+    return;
   }
-}
 
-async function gerarPix() {
-  const btn = document.querySelector('#formPix .checkout-submit');
-  btn.disabled = true;
-  btn.textContent = '⏳ Gerando PIX...';
-
-  try {
-    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/create-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await db.auth.getSession()).data.session?.access_token}`
-      },
-      body: JSON.stringify({
-        plano: currentPlano,
-        email: state.user.email,
-        userId: state.user.id,
-      })
-    });
-
-    const { clientSecret } = await res.json();
-
-    const { paymentIntent, error } = await stripeClient.confirmPixPayment(clientSecret, {
-      payment_method: { billing_details: { email: state.user.email } },
-    });
-
-    if (error) throw new Error(error.message);
-
-    const pixData = paymentIntent?.next_action?.pix_display_qr_code;
-    pixCodeData = pixData?.data || 'Código PIX gerado';
-
-    document.getElementById('pixCode').textContent = pixCodeData;
-    document.getElementById('pixQR').innerHTML = pixData?.image_url_png
-      ? `<img src="${pixData.image_url_png}" style="width:160px;height:160px"/>`
-      : '📱 QR Code PIX';
-
-    document.getElementById('checkoutStep1').style.display = 'none';
-    document.getElementById('checkoutStep2').style.display = 'block';
-
-  } catch(err) {
-    showToast('❌ Erro ao gerar PIX. Tente novamente.');
-    btn.disabled = false;
-    btn.textContent = '⚡ Gerar QR Code PIX';
-  }
-}
-
-function copiarPix() {
-  navigator.clipboard.writeText(pixCodeData).then(() => {
-    showToast('✅ Código PIX copiado!');
-  });
+  // Sucesso!
+  document.getElementById('checkoutStep1').style.display = 'none';
+  document.getElementById('checkoutStep2').style.display = 'block';
+  atualizarPlanoLocal(currentPlano);
 }
 
 function atualizarPlanoLocal(plano) {
-  state.isAdmin = state.isAdmin; // mantém admin
   document.getElementById('userPlanLabel').textContent = plano === 'pro' ? 'Plano Pro' : 'Plano Básico';
   document.getElementById('profilePlanBadge').textContent = plano === 'pro' ? '⚡ Plano Pro' : '✅ Plano Básico';
   showToast('🎉 Plano ativado com sucesso!');
