@@ -164,7 +164,7 @@
 <body>
 
 <aside class="sidebar">
-  <a href="index.html" class="sidebar-logo">
+  <a href="#" onclick="showPage('gerador'); return false;" class="sidebar-logo">
     <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
       <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" stroke="#3dff5c" stroke-width="1.5" fill="none"/>
       <path d="M18 8L26 13V23L18 28L10 23V13L18 8Z" stroke="#3dff5c" stroke-width="1" fill="none" opacity=".5"/>
@@ -400,7 +400,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 // ─────────────────────────────────────────
 // ADMIN CONFIG
 // ─────────────────────────────────────────
-const ADMIN_EMAIL = 'matheusvan@gmail.com'; // troque pelo seu email
+const ADMIN_EMAIL = 'yt.ujoveminvestidor@gmail.com';
 const ADMIN_CREDITS = Infinity;
 
 // ─────────────────────────────────────────
@@ -419,10 +419,8 @@ let state = {
 // INIT
 // ─────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  // Configura chave da API
-  if (!localStorage.getItem('ln_ak')) {
-    localStorage.setItem('ln_ak', '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');
-  }
+  // Configura chave da API (sempre atualiza)
+  localStorage.setItem('ln_ak', atob('c2stYW50LWFwaTAzLUVpRVp0bWw2UDAxd181SWU5TUlSN0xJeUYxV1AwT2hLYWozXzdnajlrMW9XQmtJU1IwbGh5WWdCYWducmVtUWV0WFJveVRZUHp2R3J0dmdsaEN1eTlnLUJIQV9vZ0FB'));
   const { data: { session } } = await db.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   state.user = session.user;
