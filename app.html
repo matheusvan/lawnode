@@ -421,6 +421,12 @@ let state = {
 window.addEventListener('DOMContentLoaded', async () => {
   // Configura chave da API (sempre atualiza)
   localStorage.setItem('ln_ak', atob('c2stYW50LWFwaTAzLUVpRVp0bWw2UDAxd181SWU5TUlSN0xJeUYxV1AwT2hLYWozXzdnajlrMW9XQmtJU1IwbGh5WWdCYWducmVtUWV0WFJveVRZUHp2R3J0dmdsaEN1eTlnLUJIQV9vZ0FB'));
+  // Protege contra logout ao apertar botão voltar do navegador
+  history.pushState(null, '', window.location.href);
+  window.addEventListener('popstate', () => {
+    history.pushState(null, '', window.location.href);
+  });
+
   const { data: { session } } = await db.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   state.user = session.user;
@@ -607,7 +613,29 @@ Retorne EXATAMENTE neste formato JSON (sem markdown, sem código, apenas o JSON 
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }]
+      system: SYSTEM_PROMPT_LAWNODE,
+      messages: [{ role: 'user', content: `TAREFA: Crie 4 roteiros DIFERENTES e COMPLETOS para um advogado da área de ${area} sobre o tema "${tema}".
+
+FORMATO SOLICITADO: ${formato}
+${instrucaoFormato}
+
+DURAÇÃO: ${duracao}
+TOM PRINCIPAL: ${tom}
+
+IMPORTANTE:
+- Use conhecimento jurídico REAL e específico sobre "${tema}" na área de ${area}
+- Não seja genérico — traga informações concretas, leis, prazos, ou situações reais
+- Cada variação deve ter uma abordagem DIFERENTE (Hook forte, Storytelling, Educativo, Provocativo)
+- Respeite TODAS as regras do Código de Ética da OAB
+- No final de cada roteiro, adicione: "⚠️ OAB: [breve lembrete do que cuidar neste roteiro]"
+
+Retorne EXATAMENTE neste formato JSON (sem markdown, sem código, apenas o JSON puro):
+{"roteiros":[
+  {"tag":"Hook forte","texto":"roteiro completo aqui"},
+  {"tag":"Storytelling","texto":"roteiro completo aqui"},
+  {"tag":"Educativo","texto":"roteiro completo aqui"},
+  {"tag":"Provocativo","texto":"roteiro completo aqui"}
+]}` }]
     })
   });
 
