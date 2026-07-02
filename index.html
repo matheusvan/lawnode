@@ -1547,7 +1547,7 @@
 
     async function handleLogin() {
       const email = document.getElementById('loginEmail').value.trim();
-      const senha = document.getElementById('loginSenha').value.trim();
+      const senha = document.getElementById('loginSenha').value;
       const manter = document.getElementById('manterConectado').checked;
       const erro  = document.getElementById('loginError');
       const btn   = document.getElementById('btnLogin');
@@ -1603,8 +1603,8 @@
     async function handleCadastro() {
       const nome   = document.getElementById('inputNome').value.trim();
       const email  = document.getElementById('inputEmail').value.trim();
-      const senha  = document.getElementById('inputSenha').value.trim();
-      const senhaC = document.getElementById('inputSenhaConfirm').value.trim();
+      const senha  = document.getElementById('inputSenha').value;
+      const senhaC = document.getElementById('inputSenhaConfirm').value;
       const erro   = document.getElementById('modalError');
       const btn    = document.getElementById('btnCadastro');
 
