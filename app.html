@@ -6,7 +6,7 @@
   <title>LawNode — Painel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -14,7 +14,7 @@
       --bg:#080808;--bg2:#0f0f0f;--bg3:#141414;--bg4:#1a1a1a;
       --border:rgba(61,255,92,0.12);--border-dim:rgba(255,255,255,0.06);
       --text:#ffffff;--text-muted:rgba(255,255,255,0.4);--text-secondary:rgba(255,255,255,0.65);
-      --font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+      --font-display:'Inter',sans-serif;--font-body:'DM Sans',sans-serif;
       --sidebar:240px;--radius:12px;--radius-lg:16px;
     }
     html{scroll-behavior:smooth}
@@ -540,20 +540,20 @@
       <div class="checkout-title" id="checkoutTitle">Assinar LawNode</div>
       <div class="checkout-sub">Cancele quando quiser. Sem taxa de adesão.</div>
 
-      <!-- ABAS: CUPOM | PLANO PAGO -->
+      <!-- ABAS: PLANO PAGO | CUPOM -->
       <div style="display:flex;gap:8px;margin-bottom:24px">
-        <button id="tabCupom" onclick="setCheckoutTab('cupom')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--green);background:var(--green-glow);color:var(--green);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s">
-          🎟️ Tenho um cupom
-        </button>
-        <button id="tabPago" onclick="setCheckoutTab('pago')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border-dim);background:none;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .15s">
+        <button id="tabPago" onclick="setCheckoutTab('pago')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--green);background:var(--green-glow);color:var(--green);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s">
           💳 Assinar plano
+        </button>
+        <button id="tabCupom" onclick="setCheckoutTab('cupom')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border-dim);background:none;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .15s">
+          🎟️ Tenho um cupom
         </button>
       </div>
 
       <!-- ABA CUPOM -->
       <div id="areaCupom">
         <div style="background:var(--green-glow);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;font-size:13px;color:var(--text-secondary);line-height:1.6">
-          ⚡ Digite seu cupom de parceiro e ganhe <strong style="color:var(--green)">20 gerações gratuitas</strong> para testar o LawNode sem precisar de cartão.
+          ⚡ Tem um código promocional? Digite abaixo e ganhe <strong style="color:var(--green)">gerações gratuitas</strong> para testar o LawNode sem precisar de cartão.
         </div>
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <input id="inputCupom" class="checkout-input" type="text" placeholder="Ex: PARCEIRO-JOAO" style="flex:1;text-transform:uppercase;letter-spacing:.05em"/>
@@ -1050,12 +1050,12 @@ function setCheckoutTab(tab) {
   const isCupom = tab === 'cupom';
   document.getElementById('areaCupom').style.display = isCupom ? 'block' : 'none';
   document.getElementById('areaPago').style.display = isCupom ? 'none' : 'block';
-  document.getElementById('tabCupom').style.borderColor = isCupom ? 'var(--green)' : 'var(--border-dim)';
-  document.getElementById('tabCupom').style.background = isCupom ? 'var(--green-glow)' : 'none';
-  document.getElementById('tabCupom').style.color = isCupom ? 'var(--green)' : 'var(--text-muted)';
   document.getElementById('tabPago').style.borderColor = !isCupom ? 'var(--green)' : 'var(--border-dim)';
   document.getElementById('tabPago').style.background = !isCupom ? 'var(--green-glow)' : 'none';
   document.getElementById('tabPago').style.color = !isCupom ? 'var(--green)' : 'var(--text-muted)';
+  document.getElementById('tabCupom').style.borderColor = isCupom ? 'var(--green)' : 'var(--border-dim)';
+  document.getElementById('tabCupom').style.background = isCupom ? 'var(--green-glow)' : 'none';
+  document.getElementById('tabCupom').style.color = isCupom ? 'var(--green)' : 'var(--text-muted)';
 
   if (!isCupom && !stripeElements) {
     iniciarStripeElements();
@@ -1167,7 +1167,7 @@ async function abrirCheckout(plano) {
   document.getElementById('checkoutOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
-  setCheckoutTab('cupom');
+  setCheckoutTab('pago');
 }
 
 function closeCheckout() {
