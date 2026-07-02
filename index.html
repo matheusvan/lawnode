@@ -1095,6 +1095,10 @@
           <label class="modal-label">Senha</label>
           <input class="modal-input" type="password" placeholder="Mínimo 8 caracteres" id="inputSenha" />
         </div>
+        <div class="modal-field">
+          <label class="modal-label">Confirmar senha</label>
+          <input class="modal-input" type="password" placeholder="Repita sua senha" id="inputSenhaConfirm" />
+        </div>
 
         <button class="modal-submit" id="btnCadastro" onclick="handleCadastro()">
           Criar conta e ganhar 2 créditos grátis →
@@ -1156,6 +1160,11 @@
         <div class="modal-field">
           <label class="modal-label">Senha</label>
           <input class="modal-input" type="password" placeholder="Sua senha" id="loginSenha" />
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <input type="checkbox" id="manterConectado" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer"/>
+          <label for="manterConectado" style="font-size:13px;color:var(--text-muted);cursor:pointer">Manter conectado</label>
         </div>
 
         <button class="modal-submit" id="btnLogin" onclick="handleLogin()">
@@ -1524,6 +1533,7 @@
     async function handleLogin() {
       const email = document.getElementById('loginEmail').value.trim();
       const senha = document.getElementById('loginSenha').value.trim();
+      const manter = document.getElementById('manterConectado').checked;
       const erro  = document.getElementById('loginError');
       const btn   = document.getElementById('btnLogin');
 
@@ -1542,7 +1552,11 @@
         const db = getSupabase();
         if (!db) throw new Error('Erro de conexão.');
 
-        const { data, error } = await db.auth.signInWithPassword({ email, password: senha });
+        const { data, error } = await db.auth.signInWithPassword({
+          email,
+          password: senha,
+          options: { persistSession: manter }
+        });
 
         if (error) {
           if (error.message.includes('Invalid login')) {
@@ -1570,15 +1584,27 @@
     });
 
     async function handleCadastro() {
-      const nome  = document.getElementById('inputNome').value.trim();
-      const email = document.getElementById('inputEmail').value.trim();
-      const senha = document.getElementById('inputSenha').value.trim();
-      const erro  = document.getElementById('modalError');
-      const btn   = document.getElementById('btnCadastro');
+      const nome   = document.getElementById('inputNome').value.trim();
+      const email  = document.getElementById('inputEmail').value.trim();
+      const senha  = document.getElementById('inputSenha').value.trim();
+      const senhaC = document.getElementById('inputSenhaConfirm').value.trim();
+      const erro   = document.getElementById('modalError');
+      const btn    = document.getElementById('btnCadastro');
 
       erro.style.display = 'none';
 
-      if (!nome || !email || !senha) {
+      if (!nome || !email || !senha || !senhaC) {
+        erro.textContent = 'Por favor, preencha todos os campos.';
+        erro.style.display = 'block';
+        return;
+      }
+
+      if (senha !== senhaC) {
+        erro.textContent = 'As senhas não coincidem. Verifique e tente novamente.';
+        erro.style.display = 'block';
+        document.getElementById('inputSenhaConfirm').focus();
+        return;
+      }
         erro.textContent = 'Por favor, preencha todos os campos.';
         erro.style.display = 'block';
         return;

@@ -189,14 +189,41 @@
     .checkout-success-icon{font-size:48px;margin-bottom:16px}
     .checkout-security{font-size:11px;color:var(--text-muted);text-align:center;margin-top:16px}
 
-    @media(max-width:1024px){.generator-layout{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}.profile-grid{grid-template-columns:1fr}.kanban-board{grid-template-columns:1fr}}
+    /* HOME */
+    .home-header { margin-bottom: 32px; }
+    .home-greeting { font-family: var(--font-display); font-size: clamp(24px,3vw,36px); font-weight: 800; margin-bottom: 6px; }
+    .home-greeting span { color: var(--green); }
+    .home-sub { font-size: 15px; color: var(--text-muted); }
+    .home-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 32px; }
+    .home-stat { background: var(--bg2); border: 1px solid var(--border-dim); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: center; gap: 14px; }
+    .home-stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .home-stat-info { flex: 1; }
+    .home-stat-val { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1; }
+    .home-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .home-section-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+    .home-shortcuts { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 32px; }
+    .shortcut-card { background: var(--bg2); border: 1px solid var(--border-dim); border-radius: var(--radius-lg); padding: 24px; cursor: pointer; transition: border-color .2s, transform .2s; display: flex; align-items: flex-start; gap: 16px; }
+    .shortcut-card:hover { border-color: var(--border); transform: translateY(-2px); }
+    .shortcut-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .shortcut-info { flex: 1; }
+    .shortcut-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .shortcut-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    .shortcut-arrow { color: var(--text-muted); font-size: 18px; align-self: center; }
+    .home-plan-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .home-plan-info { flex: 1; }
+    .home-plan-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .home-plan-desc { font-size: 13px; color: var(--text-muted); }
+    .home-credits-bar { height: 6px; background: var(--border-dim); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+    .home-credits-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .5s ease; }
+
+    @media(max-width:1024px){.generator-layout{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}.profile-grid{grid-template-columns:1fr}.kanban-board{grid-template-columns:1fr}.home-shortcuts{grid-template-columns:1fr}.home-stats{grid-template-columns:1fr}}
     @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
   </style>
 </head>
 <body>
 
 <aside class="sidebar">
-  <a href="#" onclick="showPage('gerador'); return false;" class="sidebar-logo">
+  <a href="#" onclick="showPage('home'); return false;" class="sidebar-logo">
     <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
       <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" stroke="#3dff5c" stroke-width="1.5" fill="none"/>
       <path d="M18 8L26 13V23L18 28L10 23V13L18 8Z" stroke="#3dff5c" stroke-width="1" fill="none" opacity=".5"/>
@@ -207,7 +234,11 @@
     <span class="logo-text"><span>Law</span><span>Node</span></span>
   </a>
   <nav class="sidebar-nav">
-    <button class="nav-item active" onclick="showPage('gerador')">
+    <button class="nav-item" onclick="showPage('home')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Início
+    </button>
+    <button class="nav-item" onclick="showPage('gerador')">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       Gerador
     </button>
@@ -246,6 +277,86 @@
       <div class="topbar-sub" id="topbarSub">Crie conteúdo jurídico em segundos</div>
     </div>
     <button class="btn-upgrade" onclick="abrirCheckout('pro')">⚡ Fazer upgrade</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="home-header">
+      <div class="home-greeting">Olá, <span id="homeNome">advogado</span> 👋</div>
+      <div class="home-sub">Bem-vindo ao LawNode. O que vamos criar hoje?</div>
+    </div>
+
+    <div class="home-stats">
+      <div class="home-stat">
+        <div class="home-stat-icon" style="background:rgba(61,255,92,0.1)">⚡</div>
+        <div class="home-stat-info">
+          <div class="home-stat-val stat-green" id="homeCredits">2</div>
+          <div class="home-stat-label">créditos disponíveis</div>
+        </div>
+      </div>
+      <div class="home-stat">
+        <div class="home-stat-icon" style="background:rgba(255,200,61,0.1)">🎬</div>
+        <div class="home-stat-info">
+          <div class="home-stat-val" id="homeRoteiros">0</div>
+          <div class="home-stat-label">roteiros criados</div>
+        </div>
+      </div>
+      <div class="home-stat">
+        <div class="home-stat-icon" style="background:rgba(100,100,255,0.1)">✅</div>
+        <div class="home-stat-info">
+          <div class="home-stat-val" id="homePublicados">0</div>
+          <div class="home-stat-label">conteúdos publicados</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-section-title">Acesso rápido</div>
+    <div class="home-shortcuts">
+      <div class="shortcut-card" onclick="showPage('gerador')">
+        <div class="shortcut-icon" style="background:rgba(61,255,92,0.1)">⚡</div>
+        <div class="shortcut-info">
+          <div class="shortcut-title">Gerar roteiro</div>
+          <div class="shortcut-desc">Crie roteiros para Reels, TikTok, Carrossel e YouTube com IA</div>
+        </div>
+        <span class="shortcut-arrow">→</span>
+      </div>
+      <div class="shortcut-card" onclick="showPage('kanban')">
+        <div class="shortcut-icon" style="background:rgba(255,200,61,0.1)">🗂️</div>
+        <div class="shortcut-info">
+          <div class="shortcut-title">Meu Kanban</div>
+          <div class="shortcut-desc">Organize seus roteiros em Ideias, Em produção e Publicado</div>
+        </div>
+        <span class="shortcut-arrow">→</span>
+      </div>
+      <div class="shortcut-card" onclick="showPage('dashboard')">
+        <div class="shortcut-icon" style="background:rgba(100,100,255,0.1)">📊</div>
+        <div class="shortcut-info">
+          <div class="shortcut-title">Dashboard</div>
+          <div class="shortcut-desc">Veja seu histórico, temas mais usados e resultados</div>
+        </div>
+        <span class="shortcut-arrow">→</span>
+      </div>
+      <div class="shortcut-card" onclick="showPage('perfil')">
+        <div class="shortcut-icon" style="background:rgba(255,80,80,0.1)">👤</div>
+        <div class="shortcut-info">
+          <div class="shortcut-title">Meu Perfil</div>
+          <div class="shortcut-desc">Gerencie sua conta, plano e histórico financeiro</div>
+        </div>
+        <span class="shortcut-arrow">→</span>
+      </div>
+    </div>
+
+    <div class="home-section-title">Seu plano</div>
+    <div class="home-plan-card">
+      <div class="home-plan-info">
+        <div class="home-plan-name" id="homePlanName">Plano Gratuito</div>
+        <div class="home-plan-desc" id="homePlanDesc">2 roteiros para testar o LawNode</div>
+        <div class="home-credits-bar">
+          <div class="home-credits-fill" id="homeCreditsFill" style="width:100%"></div>
+        </div>
+      </div>
+      <button class="btn-upgrade" onclick="abrirCheckout('pro')" id="homeBtnUpgrade">⚡ Fazer upgrade</button>
+    </div>
   </div>
 
   <!-- GERADOR -->
@@ -516,25 +627,36 @@ function loadUserUI() {
   const u = state.user;
   const meta = u.user_metadata || {};
   const nome = meta.nome_completo || u.email.split('@')[0];
+  const nomeFormatado = nome.split(' ')[0];
   const inicial = nome.charAt(0).toUpperCase();
   const since = new Date(u.created_at).toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
 
   document.getElementById('userAvatar').textContent = inicial;
+  document.getElementById('userName').textContent = nome;
   document.getElementById('profileAvatarBig').textContent = inicial;
   document.getElementById('profileName').textContent = nome + (state.isAdmin ? ' 👑' : '');
   document.getElementById('profileEmail').textContent = u.email;
   document.getElementById('profileSince').textContent = since;
   document.getElementById('welcomeDate').textContent = new Date(u.created_at).toLocaleDateString('pt-BR');
+  document.getElementById('homeNome').textContent = nomeFormatado;
 
   if (state.isAdmin) {
     document.getElementById('userPlanLabel').innerHTML = 'Admin <span class="admin-badge">∞</span>';
     document.getElementById('profilePlanBadge').textContent = '👑 Administrador — Acesso ilimitado';
     document.getElementById('profilePlanBadge').style.color = '#ffd04a';
     document.getElementById('statCreditosSub').textContent = 'ilimitados (admin)';
+    document.getElementById('homePlanName').textContent = '👑 Administrador';
+    document.getElementById('homePlanDesc').textContent = 'Acesso ilimitado a todas as funcionalidades';
+    document.getElementById('homeBtnUpgrade').style.display = 'none';
+    document.getElementById('homeCreditsFill').style.width = '100%';
   } else {
     document.getElementById('userPlanLabel').textContent = 'Plano Gratuito';
+    document.getElementById('homePlanName').textContent = 'Plano Gratuito';
+    document.getElementById('homePlanDesc').textContent = '2 roteiros para testar o LawNode';
   }
+
   updateCreditsUI();
+  showPage('home');
 }
 
 function updateCreditsUI() {
@@ -546,6 +668,7 @@ function updateCreditsUI() {
   if (isUnlimited) {
     document.getElementById('creditsText').textContent = '∞ créditos (admin)';
     dotsEl.innerHTML = '<span style="color:var(--green);font-size:14px;font-weight:700">∞</span>';
+    document.getElementById('homeCredits').textContent = '∞';
   } else {
     document.getElementById('creditsText').textContent = c + ' crédito' + (c !== 1 ? 's' : '') + ' disponível' + (c !== 1 ? 'is' : '');
     for (let i = 0; i < 2; i++) {
@@ -553,6 +676,8 @@ function updateCreditsUI() {
       d.className = 'credit-dot' + (i < c ? '' : ' used');
       dotsEl.appendChild(d);
     }
+    document.getElementById('homeCredits').textContent = c;
+    document.getElementById('homeCreditsFill').style.width = (c / 2 * 100) + '%';
   }
 
   document.getElementById('profileCredits').textContent = isUnlimited ? '∞' : c;
@@ -566,10 +691,11 @@ function updateCreditsUI() {
 // NAVEGAÇÃO
 // ─────────────────────────────────────────
 const pageTitles = {
-  gerador: ['Gerador de Roteiros','Crie conteúdo jurídico em segundos'],
-  kanban:  ['Kanban Editorial','Organize seus roteiros por etapa'],
+  home:      ['Início','Bem-vindo ao LawNode'],
+  gerador:   ['Gerador de Roteiros','Crie conteúdo jurídico em segundos'],
+  kanban:    ['Kanban Editorial','Organize seus roteiros por etapa'],
   dashboard: ['Dashboard','Acompanhe seus resultados'],
-  perfil:  ['Meu Perfil','Conta, plano e histórico financeiro']
+  perfil:    ['Meu Perfil','Conta, plano e histórico financeiro']
 };
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -857,6 +983,8 @@ function updateDashboard() {
   document.getElementById('statPublicados').textContent = pub;
   document.getElementById('statCreditos').textContent = usados;
   document.getElementById('profileRoteiros').textContent = total;
+  document.getElementById('homeRoteiros').textContent = total;
+  document.getElementById('homePublicados').textContent = pub;
 
   if (total > 0) {
     const freq = {};
