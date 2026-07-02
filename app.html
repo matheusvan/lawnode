@@ -822,8 +822,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   const p = PLANOS[state.plano];
-  state.credits = state.isAdmin ? Infinity : (meta.tokens_restantes ?? p.tokens);
-  state.tokensMax = p.tokens;
+  const tokensSalvos = meta.tokens_restantes;
+  const tokensMaxSalvos = meta.tokens_max_cupom;
+  state.credits = state.isAdmin ? Infinity : (tokensSalvos ?? p.tokens);
+  state.tokensMax = state.isAdmin ? Infinity : (tokensMaxSalvos ?? p.tokens);
   state.temImagem = p.imagem;
 
   loadUserUI();
@@ -1473,8 +1475,20 @@ async function validarCupom() {
     await db.from('cupons_usados').insert({ cupom_id: cupom.id, user_id: state.user.id });
     await db.from('cupons').update({ usos_atuais: cupom.usos_atuais + 1 }).eq('id', cupom.id);
 
-    // Adiciona tokens ao usuário
-    state.credits += cupom.tokens;
+    // Salva tokens no perfil do usuário no Supabase
+    const novosTokens = state.credits + cupom.tokens;
+    const novoMax = state.tokensMax + cupom.tokens;
+    await db.auth.updateUser({
+      data: {
+        tokens_restantes: novosTokens,
+        tokens_max_cupom: novoMax,
+        cupom_aplicado: codigo
+      }
+    });
+
+    // Atualiza state local
+    state.credits = novosTokens;
+    state.tokensMax = novoMax;
     updateCreditsUI();
 
     // Mostra sucesso
