@@ -535,34 +535,58 @@
   <div class="checkout-modal">
     <button class="checkout-close" onclick="closeCheckout()">×</button>
 
-    <!-- STEP 1: PAGAMENTO -->
+    <!-- STEP 1: ESCOLHA -->
     <div id="checkoutStep1">
       <div class="checkout-title" id="checkoutTitle">Assinar LawNode</div>
       <div class="checkout-sub">Cancele quando quiser. Sem taxa de adesão.</div>
 
-      <div class="checkout-price">
-        <span class="checkout-price-val" id="checkoutPriceVal">R$ 59,90</span>
-        <span class="checkout-price-period">/mês</span>
+      <!-- ABAS: CUPOM | PLANO PAGO -->
+      <div style="display:flex;gap:8px;margin-bottom:24px">
+        <button id="tabCupom" onclick="setCheckoutTab('cupom')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--green);background:var(--green-glow);color:var(--green);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s">
+          🎟️ Tenho um cupom
+        </button>
+        <button id="tabPago" onclick="setCheckoutTab('pago')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border-dim);background:none;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .15s">
+          💳 Assinar plano
+        </button>
       </div>
 
-      <!-- STRIPE ELEMENTS -->
-      <div id="payment-element" style="margin-bottom:16px"></div>
-      <div id="payment-message" style="color:#ff6b6b;font-size:13px;margin-bottom:12px;display:none"></div>
+      <!-- ABA CUPOM -->
+      <div id="areaCupom">
+        <div style="background:var(--green-glow);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;font-size:13px;color:var(--text-secondary);line-height:1.6">
+          ⚡ Digite seu cupom de parceiro e ganhe <strong style="color:var(--green)">20 gerações gratuitas</strong> para testar o LawNode sem precisar de cartão.
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="inputCupom" class="checkout-input" type="text" placeholder="Ex: PARCEIRO-JOAO" style="flex:1;text-transform:uppercase;letter-spacing:.05em"/>
+          <button onclick="validarCupom()" style="background:var(--green);color:#000;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;font-family:var(--font-body);font-size:14px;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#5fff78'" onmouseout="this.style.background='var(--green)'">
+            Aplicar
+          </button>
+        </div>
+        <div id="cupomMsg" style="font-size:13px;margin-top:8px;display:none"></div>
+      </div>
 
-      <button class="checkout-submit" id="btnPagar" onclick="processarPagamento()">
-        🔒 Pagar R$ <span id="btnValor">59,90</span>
-      </button>
+      <!-- ABA PAGO -->
+      <div id="areaPago" style="display:none">
+        <div class="checkout-price">
+          <span class="checkout-price-val" id="checkoutPriceVal">R$ 59,90</span>
+          <span class="checkout-price-period">/mês</span>
+        </div>
+        <div id="payment-element" style="margin-bottom:16px"></div>
+        <div id="payment-message" style="color:#ff6b6b;font-size:13px;margin-bottom:12px;display:none"></div>
+        <button class="checkout-submit" id="btnPagar" onclick="processarPagamento()">
+          🔒 Pagar R$ <span id="btnValor">59,90</span>
+        </button>
+      </div>
 
       <div class="checkout-security">🔒 Pagamento seguro via Stripe · Seus dados estão protegidos</div>
     </div>
 
-    <!-- STEP 2: SUCESSO -->
+    <!-- STEP 2: SUCESSO CUPOM -->
     <div id="checkoutStep2" style="display:none">
       <div class="checkout-success">
         <div class="checkout-success-icon">🎉</div>
-        <div class="checkout-title">Pagamento confirmado!</div>
-        <div class="checkout-sub" style="margin-top:8px">Seu plano foi ativado com sucesso. Bem-vindo ao LawNode Pro!</div>
-        <button class="checkout-submit" style="margin-top:24px" onclick="closeCheckout()">Continuar usando →</button>
+        <div class="checkout-title" id="successTitle">Cupom ativado!</div>
+        <div class="checkout-sub" style="margin-top:8px" id="successSub">Você ganhou 20 gerações gratuitas. Bom teste!</div>
+        <button class="checkout-submit" style="margin-top:24px" onclick="closeCheckout()">Começar a usar →</button>
       </div>
     </div>
   </div>
@@ -1022,6 +1046,112 @@ let currentPlano = 'basico';
 let stripeElements = null;
 let paymentElement = null;
 
+function setCheckoutTab(tab) {
+  const isCupom = tab === 'cupom';
+  document.getElementById('areaCupom').style.display = isCupom ? 'block' : 'none';
+  document.getElementById('areaPago').style.display = isCupom ? 'none' : 'block';
+  document.getElementById('tabCupom').style.borderColor = isCupom ? 'var(--green)' : 'var(--border-dim)';
+  document.getElementById('tabCupom').style.background = isCupom ? 'var(--green-glow)' : 'none';
+  document.getElementById('tabCupom').style.color = isCupom ? 'var(--green)' : 'var(--text-muted)';
+  document.getElementById('tabPago').style.borderColor = !isCupom ? 'var(--green)' : 'var(--border-dim)';
+  document.getElementById('tabPago').style.background = !isCupom ? 'var(--green-glow)' : 'none';
+  document.getElementById('tabPago').style.color = !isCupom ? 'var(--green)' : 'var(--text-muted)';
+
+  if (!isCupom && !stripeElements) {
+    iniciarStripeElements();
+  }
+}
+
+async function iniciarStripeElements() {
+  try {
+    const session = await db.auth.getSession();
+    const token = session.data.session?.access_token;
+    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/create-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ plano: currentPlano, email: state.user.email, userId: state.user.id })
+    });
+    const { clientSecret, error } = await res.json();
+    if (error) throw new Error(error);
+    const appearance = { theme: 'night', variables: { colorPrimary: '#3dff5c', colorBackground: '#141414', colorText: '#ffffff', fontFamily: 'DM Sans, sans-serif', borderRadius: '8px' } };
+    stripeElements = stripeClient.elements({ appearance, clientSecret });
+    paymentElement = stripeElements.create('payment');
+    paymentElement.mount('#payment-element');
+  } catch(err) {
+    showToast('❌ Erro ao carregar pagamento. Tente novamente.');
+  }
+}
+
+async function validarCupom() {
+  const codigo = document.getElementById('inputCupom').value.trim().toUpperCase();
+  const msgEl = document.getElementById('cupomMsg');
+
+  if (!codigo) {
+    msgEl.textContent = '⚠️ Digite um código de cupom.';
+    msgEl.style.color = '#ff6b6b';
+    msgEl.style.display = 'block';
+    return;
+  }
+
+  msgEl.textContent = '⏳ Validando cupom...';
+  msgEl.style.color = 'var(--text-muted)';
+  msgEl.style.display = 'block';
+
+  try {
+    // Busca o cupom no Supabase
+    const { data: cupom, error } = await db
+      .from('cupons')
+      .select('*')
+      .eq('codigo', codigo)
+      .eq('ativo', true)
+      .single();
+
+    if (error || !cupom) {
+      msgEl.textContent = '❌ Cupom inválido ou expirado.';
+      msgEl.style.color = '#ff6b6b';
+      return;
+    }
+
+    if (cupom.usos_atuais >= cupom.usos_maximos) {
+      msgEl.textContent = '❌ Este cupom já atingiu o limite de usos.';
+      msgEl.style.color = '#ff6b6b';
+      return;
+    }
+
+    // Verifica se usuário já usou esse cupom
+    const { data: jaUsou } = await db
+      .from('cupons_usados')
+      .select('id')
+      .eq('cupom_id', cupom.id)
+      .eq('user_id', state.user.id)
+      .single();
+
+    if (jaUsou) {
+      msgEl.textContent = '❌ Você já utilizou este cupom.';
+      msgEl.style.color = '#ff6b6b';
+      return;
+    }
+
+    // Registra uso do cupom
+    await db.from('cupons_usados').insert({ cupom_id: cupom.id, user_id: state.user.id });
+    await db.from('cupons').update({ usos_atuais: cupom.usos_atuais + 1 }).eq('id', cupom.id);
+
+    // Adiciona tokens ao usuário
+    state.credits += cupom.tokens;
+    updateCreditsUI();
+
+    // Mostra sucesso
+    document.getElementById('checkoutStep1').style.display = 'none';
+    document.getElementById('successTitle').textContent = '🎟️ Cupom ativado!';
+    document.getElementById('successSub').textContent = `Você ganhou ${cupom.tokens} gerações gratuitas. Aproveite o LawNode!`;
+    document.getElementById('checkoutStep2').style.display = 'block';
+    showToast(`✅ ${cupom.tokens} gerações adicionadas à sua conta!`);
+
+  } catch(err) {
+    msgEl.textContent = '❌ Erro ao validar cupom. Tente novamente.';
+    msgEl.style.color = '#ff6b6b';
+  }
+}
 async function abrirCheckout(plano) {
   currentPlano = plano;
   const precos = { basico: '59,90', pro: '99,90' };
@@ -1032,50 +1162,12 @@ async function abrirCheckout(plano) {
   document.getElementById('checkoutStep1').style.display = 'block';
   document.getElementById('checkoutStep2').style.display = 'none';
   document.getElementById('payment-message').style.display = 'none';
+  document.getElementById('cupomMsg').style.display = 'none';
+  document.getElementById('inputCupom').value = '';
   document.getElementById('checkoutOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
-
-  // Cria PaymentIntent e monta Stripe Elements
-  try {
-    const session = await db.auth.getSession();
-    const token = session.data.session?.access_token;
-
-    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/create-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        plano: currentPlano,
-        email: state.user.email,
-        userId: state.user.id,
-      })
-    });
-
-    const { clientSecret, error } = await res.json();
-    if (error) throw new Error(error);
-
-    const appearance = {
-      theme: 'night',
-      variables: {
-        colorPrimary: '#3dff5c',
-        colorBackground: '#141414',
-        colorText: '#ffffff',
-        colorDanger: '#ff6b6b',
-        fontFamily: 'DM Sans, sans-serif',
-        borderRadius: '8px',
-      }
-    };
-
-    stripeElements = stripeClient.elements({ appearance, clientSecret });
-    paymentElement = stripeElements.create('payment');
-    paymentElement.mount('#payment-element');
-
-  } catch(err) {
-    showToast('❌ Erro ao carregar checkout. Tente novamente.');
-    closeCheckout();
-  }
+  if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
+  setCheckoutTab('cupom');
 }
 
 function closeCheckout() {
@@ -1115,6 +1207,8 @@ async function processarPagamento() {
 
   // Sucesso!
   document.getElementById('checkoutStep1').style.display = 'none';
+  document.getElementById('successTitle').textContent = '🎉 Pagamento confirmado!';
+  document.getElementById('successSub').textContent = 'Seu plano foi ativado com sucesso. Bem-vindo ao LawNode!';
   document.getElementById('checkoutStep2').style.display = 'block';
   atualizarPlanoLocal(currentPlano);
 }
