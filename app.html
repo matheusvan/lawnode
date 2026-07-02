@@ -1284,29 +1284,50 @@ function initFinanceiro() {
   // Histórico
   const meta = state.user?.user_metadata || {};
   const histEl = document.getElementById('finHistorico');
+  const rows = [];
 
-  if (state.plano === 'gratuito') {
-    histEl.innerHTML = `
+  // Boas-vindas
+  rows.push(`
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+      <div>
+        <div style="font-weight:500">Créditos gratuitos de boas-vindas</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${new Date(state.user.created_at).toLocaleDateString('pt-BR')}</div>
+      </div>
+      <span style="color:#ffd04a;font-weight:700">Grátis · 2 tokens</span>
+    </div>`);
+
+  // Cupom aplicado
+  if (meta.cupom_aplicado) {
+    const tokensExtras = (meta.tokens_max_cupom || 0) - 2;
+    rows.push(`
       <div style="padding:16px 20px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center;font-size:13px">
         <div>
-          <div style="font-weight:500">Créditos gratuitos de boas-vindas</div>
-          <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${new Date(state.user.created_at).toLocaleDateString('pt-BR')}</div>
+          <div style="font-weight:500">Cupom promocional — <span style="color:var(--green);font-family:monospace;letter-spacing:.05em">${meta.cupom_aplicado}</span></div>
+          <div style="color:var(--text-muted);font-size:12px;margin-top:2px">Tokens extras adicionados à conta</div>
         </div>
-        <span style="color:#ffd04a;font-weight:700">Grátis</span>
-      </div>
-      <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">Nenhum pagamento ainda. Assine um plano para começar.</div>`;
-  } else {
+        <span style="color:var(--green);font-weight:700">Grátis · ${tokensExtras} tokens</span>
+      </div>`);
+  }
+
+  // Plano pago
+  if (state.plano !== 'gratuito' && state.plano !== 'admin') {
     const inicio = meta.plano_inicio ? new Date(meta.plano_inicio).toLocaleDateString('pt-BR') : '—';
     const valorMap = { basico: 'R$ 49,90', pro: 'R$ 99,90' };
-    histEl.innerHTML = `
+    rows.push(`
       <div style="padding:16px 20px;border-bottom:1px solid var(--border-dim);display:flex;justify-content:space-between;align-items:center;font-size:13px">
         <div>
           <div style="font-weight:500">Plano ${p.nome} — ativação</div>
           <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${inicio}</div>
         </div>
         <span style="color:var(--green);font-weight:700">${valorMap[state.plano] || '—'}</span>
-      </div>`;
+      </div>`);
   }
+
+  if (state.plano === 'gratuito' && !meta.cupom_aplicado) {
+    rows.push(`<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">Nenhum pagamento ainda. Assine um plano para começar.</div>`);
+  }
+
+  histEl.innerHTML = rows.join('');
 }
 const faqs = [
   { p: 'O que é um crédito/token?', r: 'Cada crédito equivale a 1 geração de 4 roteiros completos. Ao criar sua conta você recebe 2 créditos gratuitos para testar.' },
